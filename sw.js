@@ -1,7 +1,7 @@
 /* Service Worker: แคชตัวแอปไว้เปิดได้โดยไม่มีเน็ต (stale-while-revalidate)
    เมื่อแก้ไฟล์แอป ให้เปลี่ยนเลขเวอร์ชัน CACHE ด้านล่างทุกครั้ง แล้วอัปโหลดใหม่ */
-var CACHE='prodlog-v2';
-var SHELL=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png','./icon-maskable-512.png'];
+var CACHE='prodlog-v3';
+var SHELL=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png','./icon-maskable-512.png','./apple-touch-icon.png'];
 
 self.addEventListener('install',function(e){
   e.waitUntil(caches.open(CACHE).then(function(c){return c.addAll(SHELL)}).then(function(){return self.skipWaiting()}));
