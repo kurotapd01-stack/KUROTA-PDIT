@@ -370,6 +370,7 @@ textarea.num-input{resize:vertical;min-height:72px}
   <div class="view active" id="menuView">
     <div class="page-title">🏭 Select a Product</div>
     <button class="action-btn" id="installBtn" type="button" style="display:none;margin-bottom:.9rem" onclick="installApp()"><span class="left">📲 ติดตั้งแอปลงเครื่อง (เต็มจอ / ใช้ออฟไลน์)</span></button>
+    <div class="card" id="sizeCard" style="padding:.7rem 1rem;display:flex;align-items:center;justify-content:space-between;gap:10px"><span class="field-label" style="margin:0">ขนาดตัวอักษรบนหน้าจอ <span id="sizeLabel" style="color:var(--ink-faint);font-weight:400"></span></span><span style="display:flex;gap:8px"><button type="button" class="cnt-btn" style="width:56px" onclick="changeUiSize(-1)" title="ตัวเล็กลง">A−</button><button type="button" class="cnt-btn" style="width:56px" onclick="changeUiSize(1)" title="ตัวใหญ่ขึ้น">A+</button></span></div>
     <div class="product-grid" id="productGrid"></div>
     <div style="height:2rem"></div>
   </div>
@@ -1949,6 +1950,27 @@ renderEmpTags();
 renderProductMenu();
 
 /* ================== PWA เริ่มต้น ================== */
+/* ---- ขนาดตัวอักษร: ปรับความกว้างเลย์เอาต์ของ viewport (แท็บเล็ตจอใหญ่จะได้ตัวใหญ่ขึ้น) ---- */
+var UI_W_STEPS=[760,860,980,1100,1280]; // ตัวเลขน้อย = ตัวใหญ่
+function defaultUiW(){return (screen.width||0)>=1000?980:0}
+function currentUiW(){var v=parseInt(localStorage.getItem('pl_uiw'),10);return v>0?v:defaultUiW()}
+function applyViewport(){
+  var vp=document.querySelector('meta[name=viewport]');if(!vp)return;
+  var sw=screen.width||0,w=currentUiW();
+  vp.setAttribute('content',(w>0&&sw>w)?('width='+w+',user-scalable=no,viewport-fit=cover'):'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover');
+  var lb=$('sizeLabel');
+  if(lb){var i=UI_W_STEPS.indexOf(currentUiW());lb.textContent=i>=0?('('+(UI_W_STEPS.length-i)+'/'+UI_W_STEPS.length+')'):''}
+}
+function changeUiSize(dir){
+  var cur=currentUiW()||UI_W_STEPS[UI_W_STEPS.length-1],idx=0,best=1e9;
+  UI_W_STEPS.forEach(function(w,i){var d=Math.abs(w-cur);if(d<best){best=d;idx=i}});
+  idx=Math.max(0,Math.min(UI_W_STEPS.length-1,idx-dir));
+  try{localStorage.setItem('pl_uiw',String(UI_W_STEPS[idx]))}catch(e){}
+  applyViewport();
+}
+window.addEventListener('orientationchange',function(){setTimeout(applyViewport,300)});
+applyViewport();
+
 if(isInstalledPWA)$('fsBtn').style.display='none'; // ติดตั้งเป็นแอปแล้ว เต็มจออยู่แล้ว
 if('serviceWorker' in navigator)window.addEventListener('load',function(){
   navigator.serviceWorker.register('./sw.js').catch(function(e){console.warn('[SW]',e)});
