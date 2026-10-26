@@ -1,0 +1,1971 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="บันทึกการผลิต">
+<meta name="theme-color" content="#1B6FB8">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" type="image/png" href="./icon-192.png">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<title>บันทึกการผลิต</title>
+<style>
+:root{
+  --bg:#EAF2FB;--bg-soft:#F3F8FD;--card-border:#D8E6F3;--input-border:#C3D7EA;
+  --divider:#EAF1F8;--divider-strong:#E1EBF6;--hover-bg:#EAF4FE;--selected-bg:#E3F0FC;
+  --ink:#15293F;--ink-secondary:#3E5975;--ink-tertiary:#5C7692;--ink-faint:#8CA3BC;
+  --primary:#1B6FB8;--primary-dark:#124F8C;--primary-light:#DCEBFA;--primary-text-on-light:#155A96;
+  --teal:#0E9488;--teal-dark:#0B7A70;--teal-bg:#DEF3EF;
+  --amber-text:#8A5A12;--amber-bg:#FBEFD7;
+  --rose-text:#9C3B52;--rose-bg:#FBE8EC;
+  --indigo:#4C5FB0;--indigo-dark:#38428F;--indigo-bg:#E7E9FA;
+  --danger:#B3433D;--navy-deep:#0F3157;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px}
+body{font-family:'Sarabun',sans-serif;font-size:18px;line-height:1.5;background:linear-gradient(180deg,#EEF5FC 0%,var(--bg) 45%,#E6F0FA 100%);background-attachment:fixed;min-height:100vh;padding:1rem;padding-top:calc(1rem + env(safe-area-inset-top));padding-bottom:calc(1rem + env(safe-area-inset-bottom));padding-left:calc(1rem + env(safe-area-inset-left));padding-right:calc(1rem + env(safe-area-inset-right))}
+button,input,textarea,select{font-size:inherit}
+button{touch-action:manipulation}
+input,textarea,button{min-height:48px}
+::placeholder{opacity:.72}
+.app{max-width:720px;margin:0 auto}
+.page-title{font-size:27px;font-weight:600;color:var(--ink);margin-bottom:1rem;display:flex;align-items:center;gap:8px;line-height:1.25}
+.card{background:#fff;border:1px solid var(--card-border);border-left:4px solid var(--card-border);border-radius:12px;padding:1.1rem 1.25rem;margin-bottom:.9rem;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.section-title{font-size:19px;font-weight:600;color:var(--ink-tertiary);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;line-height:1.35}
+.card-info{border-left-color:var(--indigo)}.card-info .section-title{color:var(--indigo)}
+.card-employee{border-left-color:var(--teal)}.card-employee .section-title{color:var(--teal-dark)}
+.card-part{border-left-color:var(--amber-text)}.card-part .section-title{color:var(--amber-text)}
+.card-output,.card-summary{border-left-color:var(--primary)}.card-output .section-title,.card-summary .section-title{color:var(--primary)}
+#issuesCard{border-left-color:var(--rose-text)}#issuesCard .section-title{color:var(--rose-text)}
+.field-label{font-size:18px;color:var(--ink-secondary);margin-bottom:6px;font-weight:500;line-height:1.4}
+.field-row{margin-bottom:14px}.field-row:last-child{margin-bottom:0}
+.date-row{display:flex;gap:8px}
+.date-input{flex:1;min-width:0;padding:12px 14px;border:1px solid var(--input-border);border-radius:8px;font-size:19px;font-family:'Sarabun',sans-serif;color:var(--ink);background:#fff}
+.date-input:focus,.combo-input:focus,.num-input:focus,.search-box input:focus,.cnt-inp:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(24,95,165,.12)}
+.yesterday-btn{min-height:48px;padding:11px 16px;border:1px solid var(--input-border);border-radius:8px;font-size:18px;cursor:pointer;background:#fff;color:var(--ink-secondary);font-family:'Sarabun',sans-serif;white-space:nowrap}
+.yesterday-btn:hover{border-color:var(--primary);color:var(--primary)}
+.shift-btns{display:flex;gap:8px}
+.shift-btn{flex:1;min-height:56px;padding:13px 10px;border:1px solid var(--input-border);border-radius:10px;background:#fff;color:var(--ink-secondary);font-size:19px;font-family:'Sarabun',sans-serif;cursor:pointer;line-height:1.3}
+.shift-btn.active{background:var(--primary);color:#fff;border-color:var(--primary);font-weight:500}
+#shiftB.active{background:var(--indigo-dark);border-color:var(--indigo-dark)}
+.combo-wrap{position:relative}
+.combo-input{width:100%;min-height:50px;padding:12px 42px 12px 14px;border:1px solid var(--input-border);border-radius:8px;font-size:19px;font-family:'Sarabun',sans-serif;color:var(--ink);background:#fff}
+.combo-wrap.open .combo-input{border-color:var(--primary);border-radius:8px 8px 0 0;box-shadow:0 0 0 3px rgba(24,95,165,.12)}
+.combo-clear{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--ink-faint);font-size:17px;cursor:pointer;padding:2px 4px;display:none}
+.combo-wrap.has-value .combo-clear{display:block}
+.multi-select-wrap{position:relative}
+.multi-tags{min-height:52px;padding:6px 8px;border:1px solid var(--input-border);border-radius:8px;background:#fff;cursor:pointer;display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.multi-tags.open{border-color:var(--primary);border-radius:8px 8px 0 0}
+.tag{display:flex;align-items:center;gap:5px;background:var(--primary-light);color:var(--primary-text-on-light);padding:6px 10px;border-radius:12px;font-size:17px}
+.tag-x{cursor:pointer;font-size:17px;line-height:1;color:var(--primary)}
+.tag-x:hover{color:var(--primary-text-on-light)}
+.tags-placeholder{font-size:18px;color:var(--ink-faint);padding:2px 4px}
+.tags-arrow{margin-left:auto;color:var(--ink-faint);font-size:15px;align-self:center}
+.dropdown-list{display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--primary);border-top:none;border-radius:0 0 8px 8px;z-index:20;max-height:340px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.1)}
+.dropdown-list.open{display:block;animation:dropIn .18s ease}
+.dd-item{min-height:48px;padding:12px 14px;font-size:18px;cursor:pointer;color:var(--ink);font-family:'Sarabun',sans-serif;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--divider)}
+.dd-item:last-child{border-bottom:none}
+.dd-item:hover{background:var(--hover-bg)}
+.dd-item.selected{background:var(--selected-bg);color:var(--primary)}
+.dd-item .checkmark{width:16px;height:16px;border:1.5px solid var(--input-border);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.dd-item.selected .checkmark{background:var(--primary);border-color:var(--primary);color:#fff;animation:checkPop .25s cubic-bezier(.34,1.56,.64,1)}
+.dd-search{padding:8px 12px;border-bottom:1px solid var(--card-border);position:sticky;top:0;background:#fff}
+.dd-search input{width:100%;min-height:44px;padding:8px 10px;border:1px solid var(--card-border);border-radius:6px;font-size:15px;font-family:'Sarabun',sans-serif;outline:none}
+.dd-search input:focus{border-color:var(--primary)}
+.dd-add-row{min-height:48px;padding:11px 14px;font-size:17px;cursor:pointer;color:var(--primary);font-family:'Sarabun',sans-serif;display:flex;align-items:center;gap:6px;border-top:1px solid var(--card-border);background:var(--bg-soft)}
+.dd-add-row:hover{background:var(--selected-bg)}
+.num-input{width:100%;min-height:50px;padding:12px 14px;border:1px solid var(--input-border);border-radius:8px;font-size:19px;font-family:'Sarabun',sans-serif;color:var(--ink);background:#fff}
+textarea.num-input{resize:vertical;min-height:72px}
+.action-btn{width:100%;min-height:52px;padding:13px 16px;border:1px solid var(--input-border);border-radius:10px;background:#fff;color:var(--ink);font-size:18px;font-family:'Sarabun',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:space-between}
+.action-btn:hover{border-color:var(--primary)}
+.action-btn .left{display:flex;align-items:center;gap:8px}
+.badge{font-size:16px;background:var(--divider);padding:3px 9px;border-radius:10px;color:var(--ink-tertiary)}
+.badge.active{background:var(--primary-light);color:var(--primary-text-on-light)}
+.badge.active-amber{background:var(--amber-bg);color:var(--amber-text)}
+.badge.active-rose{background:var(--rose-bg);color:var(--rose-text)}
+.overlay{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:50;display:flex;align-items:flex-end;justify-content:center;opacity:1;transition:opacity .25s ease}
+.overlay.hidden{opacity:0;pointer-events:none}
+.overlay.hidden .sheet{transform:translateY(30px)}
+.sheet{background:#fff;border-radius:18px 18px 0 0;width:100%;max-width:720px;max-height:88vh;overflow-y:auto;padding:1.25rem;padding-bottom:2rem;transition:transform .28s cubic-bezier(.22,1,.36,1)}
+.sheet-handle{width:36px;height:4px;background:var(--card-border);border-radius:2px;margin:0 auto 1rem}
+.sheet-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+.sheet-title{font-size:21px;font-weight:600;color:var(--ink);line-height:1.25}
+.close-btn{width:44px;height:44px;border-radius:50%;border:1px solid var(--card-border);background:#fff;cursor:pointer;font-size:22px;color:var(--ink-tertiary);display:flex;align-items:center;justify-content:center}
+.cat-label{font-size:16px;font-weight:700;color:#fff;background:var(--ink-secondary);text-transform:uppercase;letter-spacing:.6px;padding:10px 12px;border-radius:7px;margin:18px 0 6px;position:sticky;top:0;z-index:5}
+.cat-label:first-child{margin-top:0}
+.dt-row{display:flex;align-items:center;min-height:58px;padding:10px 8px;border-bottom:1px solid var(--bg-soft);border-radius:8px}
+.dt-row:nth-child(even){background:var(--bg-soft)}
+.dt-row:last-child{border-bottom:none}
+.dt-name{flex:1;font-size:18px;color:var(--ink-secondary);line-height:1.35}
+.counter{display:flex;align-items:center;gap:5px}
+.cnt-btn{width:44px;height:44px;min-width:44px;border-radius:7px;border:1px solid var(--card-border);background:#fff;cursor:pointer;font-size:19px;display:flex;align-items:center;justify-content:center;color:var(--ink-secondary);flex-shrink:0;line-height:1}
+.cnt-btn:hover{border-color:var(--primary);color:var(--primary)}
+.cnt-inp{width:60px;height:44px;text-align:center;font-size:18px;font-weight:600;color:var(--ink);border:1px solid var(--input-border);border-radius:7px;padding:0 4px;font-family:'Sarabun',sans-serif;background:#fff}
+.cnt-inp::-webkit-outer-spin-button,.cnt-inp::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.cnt-inp[type=number]{-moz-appearance:textfield}
+.sheet-save-btn{width:100%;min-height:54px;padding:14px;background:var(--primary);color:#fff;border:none;border-radius:10px;font-size:17px;font-weight:600;font-family:'Sarabun',sans-serif;cursor:pointer;margin-top:1.25rem}
+.sheet-save-btn:hover{background:var(--primary-dark)}
+.cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.cal-nav-btn{width:44px;height:44px;border-radius:8px;border:1px solid var(--card-border);background:#fff;font-size:20px;color:var(--ink-secondary);cursor:pointer;display:flex;align-items:center;justify-content:center}
+.cal-nav-btn:hover{border-color:var(--primary);color:var(--primary)}
+.cal-title{font-size:18px;font-weight:600;color:var(--ink)}
+.cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:14px;color:var(--ink-faint);margin-bottom:6px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-day{height:44px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:16px;color:var(--ink);cursor:pointer;background:#fff;border:1px solid transparent}
+.cal-day:hover{background:var(--hover-bg)}
+.cal-day.other-month{color:var(--ink-faint);opacity:.5}
+.cal-day.today{border-color:var(--primary);font-weight:600}
+.cal-day.selected{background:var(--primary);color:#fff;font-weight:600}
+.submit-btn{width:100%;min-height:58px;padding:15px;background:var(--primary);color:#fff;border:none;border-radius:12px;font-size:20px;font-weight:600;font-family:'Sarabun',sans-serif;cursor:pointer;margin-top:.5rem;display:flex;align-items:center;justify-content:center;gap:8px}
+.submit-btn:hover{background:var(--primary-dark)}
+.submit-btn:disabled{background:var(--ink-faint);cursor:not-allowed}
+.toast{position:fixed;top:1.2rem;left:50%;background:var(--teal);color:#fff;padding:11px 22px;border-radius:10px;font-size:16px;z-index:200;opacity:0;transition:opacity .3s ease,transform .3s ease;pointer-events:none;font-family:'Sarabun',sans-serif;white-space:nowrap;transform:translate(-50%,-10px)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.toast.error{background:var(--danger)}
+.spinner{width:20px;height:20px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ---- views / lists ---- */
+.view{display:none}.view.active{display:block}
+.search-box{position:relative;margin-bottom:12px}
+.search-box input{width:100%;min-height:50px;padding:12px 16px 12px 44px;border:1px solid var(--input-border);border-radius:10px;font-size:16px;font-family:'Sarabun',sans-serif;background:#fff}
+.search-box .icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--ink-faint);font-size:16px;pointer-events:none}
+.process-list,.history-list{background:#fff;border:1px solid var(--card-border);border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.history-list{margin-top:1rem}
+.process-row{display:flex;align-items:center;justify-content:space-between;min-height:60px;padding:16px;border-bottom:1px solid var(--divider);cursor:pointer;gap:10px}
+.process-row:last-child{border-bottom:none}
+.process-row:hover{background:var(--bg-soft)}
+.process-name{font-size:19px;color:var(--ink);font-weight:500}
+.process-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.process-count{background:var(--divider);color:var(--ink-secondary);font-size:17px;padding:4px 10px;border-radius:8px;font-weight:500;white-space:nowrap}
+.process-count.empty{color:var(--input-border)}
+.process-chevron{color:var(--input-border);font-size:18px}
+.empty-state{text-align:center;color:var(--ink-faint);font-size:18px;padding:24px;line-height:1.6}
+.process-header-bar{display:flex;align-items:center;gap:10px;margin-bottom:.9rem}
+.back-btn{width:46px;height:46px;border-radius:10px;border:1px solid var(--card-border);background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;color:var(--ink-secondary);flex-shrink:0}
+.back-btn:hover{border-color:var(--primary);color:var(--primary)}
+.process-header-title{flex:1;background:#fff;border:1px solid var(--card-border);border-radius:12px;padding:9px 14px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.process-header-title .label{font-size:15px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.5px}
+.process-header-title .name{font-size:19px;font-weight:600;color:var(--ink);margin-top:1px}
+
+/* ---- product menu ---- */
+.product-grid{display:grid;grid-template-columns:1fr;gap:14px}
+.product-tile{background:#fff;border:1px solid var(--card-border);border-left:5px solid var(--primary);border-radius:16px;padding:1.6rem;cursor:pointer;display:flex;align-items:center;gap:16px;box-shadow:0 1px 3px rgba(0,0,0,.04);min-height:92px}
+.product-tile:hover{box-shadow:0 4px 14px rgba(0,0,0,.08)}
+.product-tile .code{font-size:28px;font-weight:700;width:78px;flex-shrink:0}
+.product-tile .info{flex:1;min-width:0}
+.product-tile .full-name{font-size:19px;color:var(--ink);font-weight:500}
+.product-tile .chev{color:var(--input-border);font-size:24px;flex-shrink:0}
+.product-tile.sop .code{color:var(--primary)}
+.product-tile.swp{border-left-color:var(--teal)}.product-tile.swp .code{color:var(--teal-dark)}
+.product-tile.vba{border-left-color:var(--amber-text)}.product-tile.vba .code{color:var(--amber-text)}
+.product-tile.vop{border-left-color:var(--indigo)}.product-tile.vop .code{color:var(--indigo-dark)}
+
+/* ---- animations / feedback ---- */
+@keyframes viewInRight{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:translateX(0)}}
+@keyframes viewInLeft{from{opacity:0;transform:translateX(-28px)}to{opacity:1;transform:translateX(0)}}
+@keyframes rowFadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes badgePop{0%{transform:scale(1)}45%{transform:scale(1.18)}100%{transform:scale(1)}}
+@keyframes checkPop{0%{transform:scale(0)}60%{transform:scale(1.25)}100%{transform:scale(1)}}
+@keyframes cardIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes dropIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.row-fade-in{animation:rowFadeIn .3s ease both}
+.view.anim-right{animation:viewInRight .28s cubic-bezier(.22,1,.36,1)}
+.view.anim-left{animation:viewInLeft .28s cubic-bezier(.22,1,.36,1)}
+.entryView-cards .card,.entryView-cards .submit-btn{animation:cardIn .32s cubic-bezier(.22,1,.36,1) both}
+.entryView-cards .card:nth-of-type(1){animation-delay:.02s}
+.entryView-cards .card:nth-of-type(2){animation-delay:.06s}
+.entryView-cards .card:nth-of-type(3){animation-delay:.10s}
+.entryView-cards .card:nth-of-type(4){animation-delay:.14s}
+.entryView-cards .card:nth-of-type(5){animation-delay:.18s}
+.entryView-cards .submit-btn{animation-delay:.22s}
+.badge.pop,.process-count.pop{animation:badgePop .32s ease}
+.tag{animation:checkPop .2s cubic-bezier(.34,1.56,.64,1)}
+.shift-btn,.action-btn,.yesterday-btn,.cnt-btn,.back-btn,.submit-btn,.sheet-save-btn,.close-btn,.process-row,.dd-item,.product-tile{transition:transform .12s ease,background-color .15s ease,border-color .15s ease,box-shadow .15s ease,opacity .15s ease}
+.card,.combo-input,.date-input,.num-input{transition:box-shadow .15s ease,border-color .15s ease}
+.shift-btn:active,.action-btn:active,.yesterday-btn:active,.cnt-btn:active,.back-btn:active,.close-btn:active,.prefill-clear:active,.fs-btn:active,.fab-add-btn:active{transform:scale(.95)}
+.submit-btn:active:not(:disabled),.sheet-save-btn:active,.product-tile:active,.process-row:active{transform:scale(.98)}
+.process-row:active{background:var(--hover-bg)}
+
+/* ---- banners / summary ---- */
+.edit-banner{background:var(--indigo-bg);color:var(--indigo-dark);padding:11px 14px;border-radius:10px;font-size:17px;margin-bottom:10px;text-align:center;font-weight:500}
+.prefill-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--teal-bg);color:var(--teal-dark);padding:11px 14px;border-radius:10px;font-size:17px;margin-bottom:10px;font-weight:500;line-height:1.4}
+.prefill-clear{min-height:44px;padding:8px 14px;border:1px solid var(--teal);border-radius:8px;background:#fff;color:var(--teal-dark);font-size:16px;font-family:'Sarabun',sans-serif;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.sum-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.sum-item{background:var(--bg-soft);border:1px solid var(--divider-strong);border-radius:10px;padding:10px 12px;min-width:0}
+.sum-label{font-size:15px;color:var(--ink-tertiary);line-height:1.3}
+.sum-value{font-size:24px;font-weight:700;color:var(--ink);margin-top:2px;line-height:1.2;word-break:break-word}
+.sum-value small{font-size:15px;font-weight:500;color:var(--ink-faint)}
+.sum-value.bad{color:var(--rose-text)}.sum-value.warn{color:var(--amber-text)}
+.warn-list{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+.warn-item{background:var(--amber-bg);color:var(--amber-text);border-radius:10px;padding:10px 14px;font-size:17px;line-height:1.45;font-weight:500}
+.field-hint{font-size:16px;margin-top:6px;line-height:1.4}
+.field-hint.warn{background:var(--amber-bg);color:var(--amber-text);border-radius:8px;padding:8px 12px;font-weight:500}
+.confirm-row{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;padding:10px 0;border-bottom:1px solid var(--divider);font-size:18px}
+.confirm-row:last-child{border-bottom:none}
+.confirm-row .k{color:var(--ink-tertiary);flex-shrink:0}
+.confirm-row .v{color:var(--ink);font-weight:600;text-align:right;word-break:break-word}
+
+/* ---- โมดอล Losstime / NG ---- */
+.modal-total{position:sticky;top:0;z-index:6;display:flex;justify-content:space-between;align-items:center;background:var(--primary-light);color:var(--primary-text-on-light);border-radius:10px;padding:10px 14px;margin-bottom:10px;font-weight:600;font-size:18px}
+.modal-total .num{font-size:24px;font-weight:700}
+.acc-item{margin-bottom:8px;border:1px solid var(--card-border);border-radius:10px;overflow:hidden}
+.acc-head{width:100%;min-height:56px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;background:var(--ink-secondary);color:#fff;border:none;font-family:'Sarabun',sans-serif;font-size:17px;font-weight:700;cursor:pointer;text-align:left}
+.acc-head .acc-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.acc-sum{background:rgba(255,255,255,.2);padding:3px 10px;border-radius:10px;font-size:16px;font-weight:600;white-space:nowrap}
+.acc-sum.has{background:var(--amber-bg);color:var(--amber-text)}
+.acc-chev{display:inline-block;transition:transform .15s ease;font-size:20px}
+.acc-item.open .acc-chev{transform:rotate(90deg)}
+.acc-body{display:none}
+.acc-item.open .acc-body{display:block;padding:4px 0}
+.cnt-btn.quick{width:auto;min-width:52px;padding:0 8px;font-size:16px;font-weight:600;color:var(--primary)}
+#dtOverlay .sheet-save-btn,#ngOverlay .sheet-save-btn{position:sticky;bottom:0;z-index:7;box-shadow:0 -8px 12px rgba(255,255,255,.95)}
+
+/* ---- history ---- */
+.history-filter-card{padding:.9rem 1rem}
+.history-date-header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--bg-soft);border-bottom:1px solid var(--divider-strong);border-top:1px solid var(--divider-strong)}
+.history-date-header:first-child{border-top:none}
+.history-date-label{font-size:17px;font-weight:600;color:var(--ink-secondary)}
+.history-date-badge{background:var(--divider);color:var(--ink-secondary);font-size:16px;padding:3px 10px;border-radius:8px;font-weight:500;white-space:nowrap}
+.history-entry{display:flex;flex-direction:column;gap:4px;min-height:64px;padding:14px 16px;border-bottom:1px solid var(--divider);cursor:pointer}
+.history-entry:last-child{border-bottom:none}
+.history-entry:hover{background:var(--bg-soft)}
+.history-entry:active{background:var(--hover-bg)}
+.history-entry-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.history-entry-process{font-size:18px;font-weight:600;color:var(--ink)}
+.history-entry-emp,.history-entry-shift{font-size:16px;color:var(--ink-tertiary)}
+.history-entry-emp{white-space:nowrap;flex-shrink:0}
+.history-entry-shift{color:var(--ink-faint)}
+.history-entry-icons{display:flex;align-items:center;gap:14px;flex-shrink:0}
+.history-icon-btn{background:none;border:none;padding:4px;cursor:pointer;font-size:17px;color:var(--ink-faint);line-height:1}
+.history-icon-btn:hover{color:var(--primary)}
+.history-icon-btn.delete:hover{color:var(--danger)}
+.history-issue-flags{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
+.flag-chip{font-size:14px;padding:2px 7px;border-radius:8px;background:var(--amber-bg);color:var(--amber-text)}
+.flag-chip.ng{background:var(--rose-bg);color:var(--rose-text)}
+
+/* ---- fullscreen / FAB / kiosk ---- */
+.fs-btn{position:fixed;bottom:16px;right:16px;width:48px;height:48px;border-radius:50%;background:var(--primary);color:#fff;border:none;box-shadow:0 3px 10px rgba(0,0,0,.25);font-size:20px;display:flex;align-items:center;justify-content:center;z-index:100;cursor:pointer}
+.fab-add-btn{position:fixed;bottom:76px;right:16px;width:56px;height:56px;border-radius:50%;background:var(--teal);color:#fff;border:none;box-shadow:0 4px 14px rgba(0,0,0,.28);font-size:28px;line-height:1;display:none;align-items:center;justify-content:center;z-index:100;cursor:pointer;transition:transform .12s ease,background-color .15s ease}
+.fab-add-btn.visible{display:flex}
+.fab-add-btn:hover{background:var(--teal-dark)}
+.kiosk-overlay{position:fixed;inset:0;background:var(--navy-deep);z-index:500;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem}
+.kiosk-overlay.show{display:flex}
+.kiosk-overlay .icon{font-size:52px;margin-bottom:1.2rem}
+.kiosk-overlay .title{font-size:20px;font-weight:600;color:#fff;margin-bottom:8px}
+.kiosk-overlay .sub{font-size:15px;color:#B7CDE3;margin-bottom:1.8rem;max-width:320px;line-height:1.6}
+.kiosk-overlay .relock-btn{padding:14px 30px;background:#fff;color:var(--primary);border:none;border-radius:12px;font-size:17px;font-weight:600;font-family:'Sarabun',sans-serif;cursor:pointer}
+.kiosk-overlay .relock-btn:active{transform:scale(.97)}
+
+/* ---- PWA / ออฟไลน์ ---- */
+#netBar{display:none;position:sticky;top:.4rem;z-index:90;align-items:center;justify-content:space-between;gap:10px;margin-bottom:.8rem;padding:10px 14px;border-radius:12px;font-size:17px;font-weight:500;line-height:1.4;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+#netBar.show{display:flex}
+#netBar.off{background:var(--navy-deep);color:#fff}
+#netBar.pend{background:var(--amber-bg);color:var(--amber-text)}
+#netBar.bad{background:var(--rose-bg);color:var(--rose-text)}
+#netBar button{min-height:44px;padding:8px 14px;border-radius:8px;border:1px solid currentColor;background:rgba(255,255,255,.92);color:inherit;font-family:'Sarabun',sans-serif;font-size:16px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.flag-chip.pend{background:var(--indigo-bg);color:var(--indigo-dark)}
+.history-note{padding:12px 16px;font-size:16px;line-height:1.45;background:var(--amber-bg);color:var(--amber-text);border-bottom:1px solid var(--divider-strong);font-weight:500}
+.setup-hint{font-size:16px;color:var(--ink-secondary);margin-bottom:12px;line-height:1.5}
+
+/* ---- มือถือ / แคบ ---- */
+@media (max-width:899px){
+  body{padding:.8rem;padding-top:calc(.8rem + env(safe-area-inset-top));padding-bottom:calc(.8rem + env(safe-area-inset-bottom));padding-left:calc(.8rem + env(safe-area-inset-left));padding-right:calc(.8rem + env(safe-area-inset-right))}
+  .app{max-width:760px}
+  .page-title{font-size:25px}
+  .card{padding:1rem;margin-bottom:1rem}
+  .section-title{font-size:17px;margin-bottom:12px}
+  .field-label{margin-bottom:7px}
+  .field-row{margin-bottom:16px}
+  .date-input,.combo-input,.num-input{min-height:50px}
+  .shift-btn{min-height:56px}
+  .action-btn{min-height:52px}
+  .submit-btn{min-height:58px}
+}
+@media (max-width:599px){
+  .sum-grid{grid-template-columns:repeat(2,1fr)}
+  .dt-row{flex-wrap:wrap;row-gap:6px}
+  .dt-name{flex:1 1 100%}
+  .counter{width:100%;justify-content:flex-end;flex-wrap:wrap}
+}
+
+/* ---- แท็บเล็ต / แนวนอน ---- */
+@media (min-width:900px){
+  body{padding:1.75rem 2.5rem;font-size:19px}
+  .app{max-width:1180px}
+  .page-title{font-size:28px;margin-bottom:1.25rem}
+  .search-box input{padding:14px 18px 14px 46px;font-size:18px;border-radius:12px}
+  .search-box .icon{font-size:19px;left:16px}
+  .process-row{padding:20px 22px}
+  .process-name{font-size:20px}
+  .process-count{font-size:16px;padding:6px 13px;border-radius:9px}
+  .process-chevron{font-size:20px}
+  .process-header-bar{margin-bottom:1.1rem}
+  .back-btn{width:48px;height:48px;font-size:23px;border-radius:12px}
+  .process-header-title{padding:12px 18px}
+  .process-header-title .label{font-size:14px}
+  .card{padding:1.5rem 1.75rem;margin-bottom:1.2rem;border-radius:14px}
+  .section-title{font-size:17px;margin-bottom:14px}
+  .field-label{margin-bottom:8px}
+  .field-row{margin-bottom:18px}
+  .date-input{padding:13px 16px;border-radius:10px}
+  .yesterday-btn{padding:13px 18px;font-size:17px;border-radius:10px}
+  .shift-btn{padding:18px 12px;font-size:20px;border-radius:12px}
+  .multi-tags{min-height:54px;padding:9px 12px;border-radius:10px}
+  .tag{font-size:16px;padding:6px 12px;border-radius:14px}
+  .tags-placeholder{font-size:17px}
+  .dd-item{padding:14px 16px;min-height:50px}
+  .dd-item .checkmark{width:19px;height:19px;font-size:14px}
+  .dd-search{padding:10px 14px}
+  .dd-search input{padding:9px 12px;font-size:16px}
+  .dd-add-row{padding:12px 16px;font-size:16px}
+  .dropdown-list{max-height:min(50vh,480px)}
+  .combo-input{padding:13px 42px 13px 16px;border-radius:10px}
+  .combo-clear{font-size:20px;right:14px}
+  .num-input{padding:13px 16px;border-radius:10px}
+  textarea.num-input{min-height:96px}
+  .action-btn{padding:16px 20px;font-size:19px;min-height:54px;border-radius:12px}
+  .badge{padding:5px 13px;border-radius:11px}
+  .cnt-btn{width:42px;height:42px;font-size:23px;border-radius:10px}
+  .cnt-inp{width:64px;height:42px;font-size:19px;border-radius:9px}
+  .dt-row{padding:13px 0}
+  .dt-name{font-size:17px}
+  .submit-btn{padding:18px;border-radius:14px}
+  .close-btn{width:40px;height:40px;font-size:25px}
+  .sheet{max-width:920px;padding:1.75rem;border-radius:22px 22px 0 0}
+  .sheet-save-btn{padding:17px;font-size:19px;border-radius:12px}
+  .history-date-header{padding:13px 22px}
+  .history-date-badge{padding:5px 12px}
+  .history-entry{padding:17px 22px;gap:6px}
+  .history-entry-process{font-size:19px}
+  .history-icon-btn{font-size:22px;padding:6px}
+  .history-entry-icons{gap:18px}
+  .flag-chip{font-size:13.5px;padding:3px 10px}
+  .fab-add-btn{width:66px;height:66px;font-size:33px;bottom:92px;right:28px}
+  .fs-btn{width:56px;height:56px;font-size:23px;bottom:22px;right:28px}
+  .toast{font-size:17px;padding:13px 26px}
+  .product-grid{grid-template-columns:1fr 1fr;gap:20px}
+  .product-tile{padding:2.1rem 2.2rem;border-radius:20px;min-height:120px}
+  .product-tile .code{font-size:32px;width:96px}
+  .product-tile .full-name{font-size:22px}
+  .product-tile .chev{font-size:27px}
+  #formPanel{display:grid;grid-template-columns:1fr 1fr;column-gap:1.25rem;align-items:start}
+  #formPanel>.card{margin-bottom:1.2rem}
+  #formPanel>.action-btn,#formPanel>.edit-banner,#formPanel>.prefill-banner,#formPanel>#summaryCard,#formPanel>#issuesCard,#formPanel>.submit-btn,#formPanel>div[style]{grid-column:1 / -1}
+}
+@media (min-width:1150px){.app{max-width:1260px}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <div id="netBar"></div>
+
+  <!-- VIEW 0: เลือกผลิตภัณฑ์ -->
+  <div class="view active" id="menuView">
+    <div class="page-title">🏭 Select a Product</div>
+    <button class="action-btn" id="installBtn" type="button" style="display:none;margin-bottom:.9rem" onclick="installApp()"><span class="left">📲 ติดตั้งแอปลงเครื่อง (เต็มจอ / ใช้ออฟไลน์)</span></button>
+    <div class="product-grid" id="productGrid"></div>
+    <div style="height:2rem"></div>
+  </div>
+
+  <!-- VIEW 1: รายการกระบวนการ -->
+  <div class="view" id="listView">
+    <div class="process-header-bar">
+      <button class="back-btn" onclick="backToMenu()" title="เปลี่ยนผลิตภัณฑ์">☰</button>
+      <div class="process-header-title">
+        <div class="label">Product</div>
+        <div class="name" id="listViewProductLabel">—</div>
+      </div>
+    </div>
+    <div class="search-box">
+      <span class="icon">🔍</span>
+      <input type="text" id="processSearch" placeholder="ค้นหากระบวนการ..." oninput="renderProcessList(this.value)">
+    </div>
+    <div class="process-list" id="processListContainer"></div>
+    <div style="height:2rem"></div>
+  </div>
+
+  <!-- VIEW 2: ประวัติ + ฟอร์มของกระบวนการ -->
+  <div class="view" id="entryView">
+    <div class="process-header-bar">
+      <button class="back-btn" onclick="backToList()" title="กลับไปเลือกกระบวนการ">←</button>
+      <div class="process-header-title">
+        <div class="label" id="selectedProductLabel">กระบวนการ</div>
+        <div class="name" id="selectedProcessLabel">—</div>
+      </div>
+    </div>
+
+    <div id="historyPanel">
+      <div class="card history-filter-card">
+        <div class="search-box" style="margin-bottom:0">
+          <span class="icon">🔍</span>
+          <input type="text" id="historySearch" placeholder="ค้นหา Part Number..." oninput="renderProcessHistory()">
+        </div>
+      </div>
+      <div class="history-list" id="historyListContainer"></div>
+      <div style="height:2rem"></div>
+    </div>
+
+    <div id="formPanel" style="display:none">
+      <button class="action-btn" style="margin-bottom:.9rem" onclick="showHistoryPanel()">
+        <span class="left">← กลับไปดูรายการที่บันทึกไว้</span>
+      </button>
+
+      <div class="edit-banner" id="editBanner" style="display:none">✎ กำลังแก้ไขข้อมูลที่เคยบันทึกไว้</div>
+      <div class="prefill-banner" id="prefillBanner" style="display:none">
+        <span id="prefillText"></span>
+        <button class="prefill-clear" type="button" onclick="clearPrefill()">ล้างที่เติมไว้</button>
+      </div>
+
+      <div class="card card-info">
+        <div class="section-title">ข้อมูลทั่วไป</div>
+        <div class="field-row">
+          <div class="field-label">วันที่</div>
+          <div class="date-row">
+            <input type="text" class="date-input" id="dateDisplay" readonly placeholder="วว/ดด/ปปปป" onclick="openDatePicker()" style="cursor:pointer">
+            <input type="hidden" id="dateField">
+            <button class="yesterday-btn" type="button" onclick="setDateValue(todayStr())">วันนี้</button>
+            <button class="yesterday-btn" type="button" onclick="setDateValue(yesterdayStr())">◀ เมื่อวาน</button>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field-label">กะทำงาน</div>
+          <div class="shift-btns">
+            <button class="shift-btn active" id="shiftA" onclick="selectShift('A')">Shift A</button>
+            <button class="shift-btn" id="shiftB" onclick="selectShift('B')">Shift B</button>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field-label">ช่วงเวลา</div>
+          <div class="shift-btns">
+            <button class="shift-btn active" id="dayBtn" onclick="selectDayNight('Day')">☀️ Day</button>
+            <button class="shift-btn" id="nightBtn" onclick="selectDayNight('Night')">🌙 Night</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card card-employee">
+        <div class="section-title">พนักงาน</div>
+        <div class="field-label">ชื่อพนักงาน <span style="color:var(--ink-faint);font-weight:400">(เลือกได้หลายคน)</span></div>
+        <div class="multi-select-wrap" id="empWrap">
+          <div class="multi-tags" id="empTags" onclick="toggleEmpDropdown()">
+            <span class="tags-placeholder" id="empPlaceholder">— เลือกพนักงาน —</span>
+            <span class="tags-arrow" id="empArrow">▾</span>
+          </div>
+          <div class="dropdown-list" id="empList">
+            <div class="dd-search"><input type="text" placeholder="ค้นหาชื่อ..." id="empSearch" oninput="renderEmpItems(this.value)" onclick="event.stopPropagation()"></div>
+            <div id="empItems"></div>
+            <div class="dd-add-row" onclick="addNewEmployee()">＋ เพิ่มชื่อพนักงานใหม่</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card card-part">
+        <div class="section-title">ชิ้นงาน</div>
+        <div class="field-label">Part Number</div>
+        <div class="combo-wrap" id="partWrap">
+          <input type="text" class="combo-input" id="partInput" placeholder="พิมพ์เพื่อค้นหา Part Number..." autocomplete="off" oninput="onPartInput()" onclick="openPartDropdown()">
+          <span class="combo-clear" onclick="clearPart(event)">×</span>
+          <div class="dropdown-list" id="partDropdownList"><div id="partItems"></div></div>
+        </div>
+        <div class="field-row" style="margin-top:14px">
+          <div class="field-label">Cycle Time <span style="color:var(--ink-faint);font-weight:400">(ดึงอัตโนมัติจาก Part Number ที่เลือก)</span></div>
+          <input type="number" class="num-input" id="cycleTimeField" placeholder="0" min="0" step="any" readonly style="background:var(--bg-soft);color:var(--ink-secondary);cursor:not-allowed">
+          <div class="field-hint warn" id="cycleWarn" style="display:none"></div>
+        </div>
+      </div>
+
+      <div class="card card-output">
+        <div class="section-title">ผลการผลิต</div>
+        <div class="field-row">
+          <div class="field-label">จำนวนชิ้นงานทั้งหมด (ชิ้น)</div>
+          <input type="number" class="num-input" id="totalPcs" placeholder="0" min="0" inputmode="numeric" oninput="updateLiveSummary()">
+        </div>
+        <div class="field-row">
+          <div class="field-label">เวลาทำงานจริง (นาที)</div>
+          <input type="number" class="num-input" id="actualTime" placeholder="0" min="0" inputmode="numeric" oninput="updateLiveSummary()">
+        </div>
+      </div>
+
+      <div class="card" id="issuesCard">
+        <div class="section-title">ปัญหา</div>
+        <div class="field-row">
+          <button class="action-btn" onclick="openModal('downtime')">
+            <span class="left"><span>⏸</span> Losstime</span>
+            <span class="badge" id="dtBadge">ยังไม่มีข้อมูล</span>
+          </button>
+        </div>
+        <div class="field-row" id="ngButtonsWrap"></div>
+        <div class="field-row">
+          <div class="field-label">ปัญหาเครื่องจักร / หมายเหตุ</div>
+          <textarea class="num-input" id="machineIssue" placeholder="กรอกปัญหาหรือหมายเหตุ..."></textarea>
+        </div>
+      </div>
+
+      <div class="card card-summary" id="summaryCard">
+        <div class="section-title">สรุปผลก่อนบันทึก</div>
+        <div class="sum-grid">
+          <div class="sum-item"><div class="sum-label">ชิ้นงานดี</div><div class="sum-value" id="sumGood">—</div></div>
+          <div class="sum-item"><div class="sum-label">NG</div><div class="sum-value" id="sumNg">—</div></div>
+          <div class="sum-item"><div class="sum-label">Productivity</div><div class="sum-value" id="sumProd">—</div></div>
+          <div class="sum-item"><div class="sum-label">ชิ้น / ชม.</div><div class="sum-value" id="sumPph">—</div></div>
+        </div>
+        <div class="warn-list" id="warnList" style="display:none"></div>
+      </div>
+
+      <button class="submit-btn" id="submitBtn" onclick="submitForm()">💾 บันทึกข้อมูล</button>
+      <div style="height:2rem"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Losstime Modal -->
+<div class="overlay hidden" id="dtOverlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <span class="sheet-title">⏸ Losstime</span>
+      <button class="close-btn" onclick="closeModal('downtime')">×</button>
+    </div>
+    <div id="dtContent"></div>
+    <button class="sheet-save-btn" onclick="saveModal('downtime')">✓ บันทึก Loss time</button>
+  </div>
+</div>
+
+<!-- NG Modal -->
+<div class="overlay hidden" id="ngOverlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <span class="sheet-title">⚠️ งาน NG</span>
+      <button class="close-btn" onclick="closeModal('ng')">×</button>
+    </div>
+    <div id="ngContent"></div>
+    <button class="sheet-save-btn" onclick="saveModal('ng')">✓ บันทึก NG</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="overlay hidden" id="setupOverlay" style="z-index:300;align-items:center">
+  <div class="sheet" style="max-width:420px;border-radius:18px">
+    <div class="sheet-header"><span class="sheet-title">🔑 ตั้งค่าเครื่อง</span></div>
+    <div class="setup-hint">กรอกรหัสเข้าใช้งาน (ขอจากผู้ดูแลระบบ) — ต้องต่อเน็ตตอนกรอกครั้งแรก หลังจากนี้เครื่องจะจำรหัสไว้</div>
+    <input type="password" class="combo-input" id="setupCode" placeholder="รหัสเข้าใช้งาน" autocomplete="off" style="width:100%;margin-bottom:8px">
+    <div class="field-hint" id="setupMsg" style="color:var(--danger);min-height:24px;margin-bottom:8px"></div>
+    <button class="sheet-save-btn" id="setupBtn" style="margin-top:0" onclick="submitSetup()">✓ ตกลง</button>
+  </div>
+</div>
+<button class="fab-add-btn" id="fabAddBtn" onclick="showAddForm()" title="เพิ่มข้อมูลใหม่">＋</button>
+<button class="fs-btn" id="fsBtn" onclick="toggleFullscreen()" title="โหมดเต็มจอ">⛶</button>
+
+<div class="kiosk-overlay" id="kioskOverlay">
+  <div class="icon">🔒</div>
+  <div class="title">ออกจากโหมดเต็มจอแล้ว</div>
+  <div class="sub">แอปนี้ตั้งค่าให้ทำงานแบบเต็มจอ กดปุ่มด้านล่างเพื่อกลับเข้าสู่โหมดเต็มจออีกครั้ง</div>
+  <button class="relock-btn" onclick="requestFullscreenNow()">⛶ กลับเข้าโหมดเต็มจอ</button>
+</div>
+
+<div class="overlay hidden" id="saveConfirmOverlay">
+  <div class="sheet" style="max-width:560px">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <span class="sheet-title" id="saveConfirmTitle">ตรวจสอบก่อนบันทึก</span>
+      <button class="close-btn" onclick="closeSaveConfirm()">×</button>
+    </div>
+    <div id="saveConfirmBody"></div>
+    <div style="display:flex;gap:10px;margin-top:1.25rem">
+      <button class="action-btn" style="flex:1;justify-content:center" onclick="closeSaveConfirm()">← กลับไปแก้ไข</button>
+      <button class="sheet-save-btn" id="saveConfirmBtn" style="flex:1;margin-top:0" onclick="closeSaveConfirm();submitForm(true)">✓ ยืนยันบันทึก</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="confirmOverlay">
+  <div class="sheet" style="max-width:420px">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header"><span class="sheet-title" id="confirmTitle">ยืนยัน</span></div>
+    <div id="confirmMessage" style="padding:0 0 1.2rem;color:var(--ink-secondary);font-size:16px;line-height:1.5"></div>
+    <div style="display:flex;gap:10px">
+      <button class="action-btn" style="flex:1" onclick="closeConfirmDialog(false)">ยกเลิก</button>
+      <button class="sheet-save-btn" style="flex:1;margin-top:0;background:var(--danger)" onclick="closeConfirmDialog(true)">ยืนยัน</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="promptOverlay">
+  <div class="sheet" style="max-width:420px">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header"><span class="sheet-title" id="promptTitle">กรอกข้อมูล</span></div>
+    <input type="text" class="combo-input" id="promptInputField" style="width:100%;margin-bottom:1.2rem">
+    <div style="display:flex;gap:10px">
+      <button class="action-btn" style="flex:1" onclick="closePromptDialog()">ยกเลิก</button>
+      <button class="sheet-save-btn" style="flex:1;margin-top:0" onclick="submitPromptDialog()">ตกลง</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="dateOverlay">
+  <div class="sheet" style="max-width:420px">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <span class="sheet-title">📅 เลือกวันที่</span>
+      <button class="close-btn" onclick="closeDatePicker()">×</button>
+    </div>
+    <div class="cal-header">
+      <button class="cal-nav-btn" onclick="calChangeMonth(-1)">‹</button>
+      <span class="cal-title" id="calTitle">—</span>
+      <button class="cal-nav-btn" onclick="calChangeMonth(1)">›</button>
+    </div>
+    <div class="cal-weekdays" id="calWeekdays"></div>
+    <div class="cal-grid" id="calGrid"></div>
+    <button class="action-btn" style="margin-top:12px" onclick="calGoToday()">📍 วันนี้</button>
+  </div>
+</div>
+
+<script>
+/* ================== ข้อมูลตั้งค่า ================== */
+var PRODUCTS=[
+  {code:'SOP',full:'Shaft Oil Pump',cls:'sop'},
+  {code:'SWP',full:'Shaft Water Pump',cls:'swp'},
+  {code:'VBA',full:'Valve Booster Air',cls:'vba'},
+  {code:'VOP',full:'Valve Oil Pump',cls:'vop'}
+];
+
+var processesByProduct={
+  SOP:['Lathe Auto (B08-01)','Lathe Auto (B12-13)','Lathe Auto (B12-24)','Lathe Auto (B12-28)','Cold Forging (SOP)','Lathe SOP (Set 1)','Lathe SOP (Set 2)','Lathe SOP (Set 6)','Lathe SOP (Set 7)','Lathe 2 11070 11090','Roll Slit SOP','Grinding SOP (Set 3)','Grinding SOP (Set 4)','Grinding SOP (Set 5)','Grinding SOP (Set 6)','Grinding SOP (Set 7)','Gr 1,2 11070 11090','Induction','Screening 1 SOP','Screening 100 SOP'],
+  SWP:['Grinding 1 SWP (Set 1)','Grinding 1 SWP (Set 2)','Lathe 1,2 + Gr 2 (Set 1)','Lathe 1,2 + Gr 2 (Set 2)','Lathe 1,2 + Gr 2 (Set 4)','Milling Small SWP','Deburring Small SWP','Grinding Small SWP','Screening 100 SWP (Change Box)','Screening 100 SWP'],
+  VBA:['Lathe OP1 (B23-16)','Lathe OP1 (B23-17)','Lathe OP1 (B15-03)','Lathe OP1 (B10-15)','Lathe OP1 (B13-11)','Lathe OP1 (B15-02)','Lathe OP1 (B12-01)','Lathe OP2 (B05-07)','Lathe OP2 (B07-07)','Lathe OP2 (B07-04)','Lathe OP2 (B11-32)','Lathe OP2 (B12-23)','Lathe OP2 (B12-29)','Screening 1 VBA','Screening 1 VBA (Plunger)','Screening 100 VBA (Plunger)','Screening 100 VBA'],
+  VOP:['Lathe Auto (B22-01)','Lathe Auto (B23-01)','Lathe Auto (B13-06)','Lathe Auto (B17-16)','Lathe 1,2 (10230)','Drilling (10290)','Deburring (10290)','Grinding 1','Grinding 2','Grinding 3','Camera','Screening 100 VOP']
+};
+
+var partsByProduct={
+  SOP:['11120','11040','11320','11051','11110','11070','11090','11120 L','11120 S','11040 L','11040 S','11120 (TH)','11120 (BZ)'],
+  SWP:['10160','10250','10260','10300'],
+  VBA:['17880','18950','20930','20970','20410','22170','17891','14341','14371','SPACER','Plunger','16631','17131','18360','19050','21970','22090','20030','27040'],
+  VOP:['10050','10070','46040','10290','10230','Y1','10080','10050 (TH)','10050 (INDO)','10290 (TH)','10290 (BZ)','10070 (TH)','10070 (BZ)']
+};
+
+var dtData={
+  'Plan':{'QCC Meeting':0,'No plan OT / Support กระบวนการอื่น':0,'อบรม':0,'Other (อื่นๆ)':0},
+  'MT Maintenance':{'แผนก MT ตรวจเช็คเครื่องจักรตามรอบ':0,'แผนก MT เข้ามาซ่อมเครื่องจักร':0,'แผนก MT ไม่มีอุปกรณ์เปลี่ยน (หิน,สายพาน,มีด)':0,'ไฟดับ':0,'Other (อื่นๆ)':0},
+  'PC Production Control':{'ไม่มีงาน':0,'รอจ่ายงานจากแผนก PC':0,'ไม่มีกล่อง ไม่มีถาด':0,'Check Stock':0,'Other (อื่นๆ)':0},
+  'QC Quality Control':{'แผนก QC ตรวจเช็คชิ้นงานตัวแรก':0,'แผนก QC ตรวจเช็คชิ้นงานเปลี่ยนพาส':0,'แผนก QC ตรวจเช็คงานเปลี่ยนทูล':0,'Other (อื่นๆ)':0},
+  'PD Production':{'แผนก PD เปลี่ยนมีด,ทูล':0,'แผนก PD เปลี่ยนพาส':0,'แผนก PD ออฟเซ็ตเครื่องจักร':0,'ล้างกรอง':0,'ออกโอที นอกแผนผลิต':0,'เติมน้ำมัน,เปลี่ยนน้ำมัน':0,'Other (อื่นๆ)':0}
+};
+
+/* ---- รายการประเภท NG (ใช้ร่วมกันหลายกระบวนการ — แก้ที่เดียว มีผลทุกกระบวนการที่ใช้ชุดนั้น) ---- */
+var NG_DEFAULT=['Dent / Hit (กระแทก)','Scratch (ขีดข่วน)','Burr (ครีบ)','Diameter Over Spec (เส้นผ่านศูนย์กลางใหญ่)','Diameter Lower Spec (เส้นผ่านศูนย์กลางเล็ก)','ผิดรูป Grind ไม่หมด','ผิดรูป Grind กินบ่า','ผิดรูป Grind เป็นเหลี่ยม','Setting','Other (อื่นๆ)'];
+var NG_GEN=['Dent / Hit (กระแทก)','Scratch (ขีดข่วน)','Burr (ครีบ)','Impression (รอยกดทับ)','Length Error (ความยาว)','Diameter Error (เส้นผ่านศูนย์กลาง)','Deform (ผิดรูป)','Setting','Rusty (สนิม)','Other (อื่นๆ)'];
+var NG_COLD=['Dent / Hit (กระแทก)','Scratch (ขีดข่วน)','Burr (ครีบ)','Impression (รอยกดทับ)','Length Error (ความยาว)','Diameter Error (เส้นผ่านศูนย์กลาง)','Deform (ผิดรูป)','Setting','Other (อื่นๆ)'];
+var NG_LATHE2=['Dent Lathe 1 / Hit (กระแทก)','Dent Lathe 2 / Hit (กระแทก)','Scratch Lathe 1 (ขีดข่วน)','Scratch Lathe 2 (ขีดข่วน)','Impression Lathe 1 (รอยกดทับ)','Impression Lathe 2 (รอยกดทับ)','Burr Lathe 1 (ครีบ)','Burr Lathe 2 (ครีบ)','Length Error Lathe 1 (ความยาว)','Length Error Lathe 2 (ความยาว)','Diameter Error Lathe 1 (เส้นผ่านศูนย์กลาง)','Diameter Error Lathe 2 (เส้นผ่านศูนย์กลาง)','Deform Lathe 1 (ผิดรูป)','Deform Lathe 2 (ผิดรูป)','Setting Lathe 1','Setting Lathe 2','Other (อื่นๆ)'];
+var NG_LATHE_SOP=['Dent / Hit (กระแทก)','Scratch (ขีดข่วน)','Burr (ครีบ)','Impression (รอยกดทับ)','Length Over Spec (Lenght ยาว)','Length Lower Spec (Lenght สั้น)','Diameter Over Spec (เส้นผ่านศูนย์กลางใหญ์)','Diameter Lower Spec (เส้นผ่านศูนย์กลางเล็ก)','Deform (ผิดรูปดิวหัก)','Deform (ผิดรูป Lathe ไม่หมด)','Setting','Other (อื่นๆ)'];
+var NG_ROLL_SET=['Dent / Hit (กระแทก)','Burr (ครีบ)','Lenght Error (ความยาว)','Diameter Error (เส้นผ่านศูนย์กลาง)','Deform (ผิดรูป Roll ซ้อน)','Deform (ผิดรูป Roll กินบ่า)','Deform (ผิดรูป Roll ไม่สุด)','Deform (ผิดรูป Roll แตก)','setting','Other (อื่นๆ)'];
+var NG_ROLL_SLIT=['Dent / Hit (กระแทก)','Burr (ครีบ)','Length Error (ความยาว)','Diameter Error (เส้นผ่านศูนย์กลาง)','Deform (ผิดรูป Roll ซ้อน)','Deform (ผิดรูป Roll กินบ่า)','Deform (ผิดรูป Roll ไม่สุด)','Deform (ผิดรูป Roll แตก)','Setting','Other (อื่นๆ)'];
+var NG_INDUCTION=['Dent / Hit (กระแทก)','Scratch (ขีดข่วน)','Burr (ครีบ)','Impression (รอยกดทับ)','Length Error (ความยาว)','Diameter Error (เส้นผ่านศูนย์กลาง)','Deform (ผิดรูป)','ตัวแรก,ตัวสุดท้าย','Setting','Check Crack','Other (อื่นๆ)'];
+var NG_ROLL_M=['Dent / Hit (กระแทก)','Burr (ครีบ)','Diamiter Over Spec (เส้นผ่านศูนย์กลางใหญ่)','Diamiter Lower Spec (เส้นผ่านศูนย์กลางเล็ก)','Length Go Not Pass (Go เข้าไม่ได้)','Length No-Go Pass (No - Go เข้าได้)','Ring Rolling Stuck (หมุนเกลียวติด)','Ring Not Smooth (หมุนเกลียวสดุด)','Deform (ผิดรูป Roll กินบ่า)','Setting','Other (อื่นๆ)'];
+var NG_MILL_SOP=['Dent / Hit (กระแทก)','Scratch (ขีดข่วน)','Burr (ครีบ)','Diameter Over Spec (เส้นผ่านศูนย์กลางใหญ่)','Diameter Lower Spec (เส้นผ่านศูนย์กลางเล็ก)','Length Milling','Double Milling (Milling ซ้ำ)','Deform (ผิดรูป)','Setting','Other (อื่นๆ)'];
+var NG_SCREEN_SOP=['รอยกระแทก LA (Hit / Dent)','รอยกระแทก GR (Hit / Dent)','รอยขีดข่วน LA (Scrath Lathe)','รอยขีดข่วน GR (Scrath Grinding)','สนิม (Rusty)','ครีบ (Burr) เศษเหล็ก','รอยกดทับ (Impression)','ผิดรูป LA (Deform Lathe)','ผิดรูป GR เป็นเหลี่ยม (Deform Grinding)','ผิดรูป Girnd ไม่หมด','ผิดรูป Grind กินบ่า','ผิดรูป RO (Deform Rolling)','ผิดรูป M (Deform Rolling M)','Other (อื่นๆ)'];
+var NG_SWP_GR2=['Dent / Hit (กระแทก)','Scratch (ขีดข่วน)','Burr (ครีบ)','Impression (รอยกดทับ)','Length Error (ความยาว)','Diameter Over Spec (เส้นผ่านศูนย์กลางใหญ่)','Diameter Lower Spec (เส้นผ่านศูนย์กลางเล็ก)','Diameter Not Balance (เส้นผ่านศูนย์กลางไม่บาลานซ์)','Setting Diameter Lower','Setting Diameter Over','Setting Not Balance','Deform (ผิดรูป)','Rusty (สนิม)','Other (อื่นๆ)'];
+var NG_SWP_MILL=['Dent ML / Hit (กระแทก)','Scratch ML (ขีดข่วน)','Length Error ML (ความยาว)','Deform ML (ผิดรูป)','Double ML (ผิดรูป)','Setting ML','Other (อื่นๆ)'];
+var NG_SWP_GRIND=['Dent GR / Hit (กระแทก)','Scratch GR (ขีดข่วน)','Burr GR (ครีบ)','Diameter Error GR','Deform (ผิดรูป)','Setting GR','Other (อื่นๆ)'];
+var NG_SWP_SCREEN=['Dent ML / Hit (กระแทก)','Scratch ML (ขีดข่วน)','Length Error ML','Deform ML (ผิดรูป)','Double ML (ผิดรูป)','Dent GR / Hit (กระแทก)','Scractch GR (ขีดข่วน)','Burr GR (ครีบ)','Diameter Error GR','Deform GR (ผิดรูป)','Other (อื่นๆ)'];
+var NG_VOP_LATHE=['Dent / Hit lathe 1 (กระแทก)','Dent / Hit lathe 2 (กระแทก)','Scratch Lathe 1 (กระแทก)','Scratch Lathe 2 (กระแทก)','Burr Lathe 1 (ครีบ)','Burr Lathe 2 (ครีบ)','Impression Lathe 1 (รอยกดทับ)','Impression Lathe 2 (รอยกดทับ)','Length Error Lathe 1 (ความยาว)','Length Error Lathe 2 (ความยาว)','Diameter Error Lathe 1 (เส้นผ่านศูนย์กลาง)','Diameter Error Lathe 2 (เส้นผ่านศูนย์กลาง)','Deform Lathe 1 (ผิดรูป)','Deform Lathe 2 (ผิดรูป)','Setting Lathe 1','Setting Lathe 2','Rusty Lathe 1 (สนิม)','Rusty Lathe 2 (สนิม)'];
+var NG_DRILL=['Dent / Hit (กระแทก)','Scratch (ขีดข่วน)','Burr (ครีบ)','Impression (รอยกดทับ)','Length Error (ความยาว)','Diameter Error (เส้นผ่านศูนย์กลาง)','Deform (ผิดรูป)','Setting','Rusty (สนิม)','Double Drilling (เจาะซ้ำ)','Other (อื่นๆ)'];
+var NG_DEBURR_VOP=['Dent / Hit (กระแทก)','Scratch (ขีดข่วน)','Burr (ครีบ)','Impression (รอยกดทับ)','Length Error (ความยาว)','Diameter Error (เส้นผ่านศูนย์กลาง)','Deform (ผิดรูป)','Setting','Double Drilling (เจาะซ้ำ)','Other (อื่นๆ)'];
+var NG_VOP_SCREEN=['Dent / Hit (กระแทก)','Scratch (ขีดข่วน)','Rusty (สนิม)','ครีบ (Burr) เศษเหล็กในรู','Impression (รอยกดทับ)','Dirty (คราบสกปรก)','Deform (ผิดรูป)','Kiriko (เศษเหล็ก)','Other (อื่นๆ)'];
+var NG_VBA_SCREEN=['รอยกระแทก (Hit / Dent)','รอยขีดข่วน (Scratch)','สนิม (Rusty)','ครีบ (Burr) เศษเหล็กในรู','รอยรมดำไม่ทั่ว (Plating)','รอยกดทับ (Impression)','คราบน้ำยา (Chemical)','ผิดรูป (Deform)','เศษเหล็ก (Kiriko)','อื่นๆ (Other)'];
+var NG_VBA_PLUNGER=['รอยกระแทก (Hit / Dent)','รอยขีดข่วน (Scratch)','รอย Lathe งานผิดรูป (Lathe Deform)','ผิวไม่เรียบ (Surface Roughness) Over Spec','สนิม (Rusty)','รอยกดทับ (Impression)','ครีบรอบตัวงาน (Bari)','เศษเหล็กในรู (Kiriko)','อื่นๆ (Other)'];
+function ngLathe(n){return ['Dent Lathe '+n+' / Hit (กระแทก)','Scratch Lathe '+n+' (ขีดข่วน)','Impression Lathe '+n+' (รอยกดทับ)','Burr Lathe '+n+' (ครีบ)','Length Error Lathe '+n+' (ความยาว)','Diameter Error Lathe '+n+' (เส้นผ่านศูนย์กลาง)','Deform Lathe '+n+' (ผิดรูป)','Setting Lathe '+n,'Other (อื่นๆ)']}
+
+/* ---- ใช้เมื่อกระบวนการไม่มีรายการเครื่อง หรือเครื่องนั้นไม่มีชุด NG เฉพาะ ---- */
+var ngTypesByProcess={
+  'default':NG_DEFAULT,
+  'Cold Forging (SOP)':['รอยบุบ','แตกร้าว','ขนาดผิด','ผิวขรุขระ','อื่นๆ'],
+  'Roll Slit SOP':['ขนาดผิด','ร่องเยื้อง','รอยขีด','อื่นๆ']
+};
+function getNgTypesForProcess(p){return ngTypesByProcess[p]||ngTypesByProcess['default']}
+
+/* ---- เครื่องจักรของแต่ละกระบวนการ: regMach(รายชื่อเครื่อง, [กระบวนการ...]) ---- */
+var machinesByProcess={};
+function regMach(machines,processes){processes.forEach(function(p){machinesByProcess[p]=machines})}
+// SOP
+regMach(['Lathe 1'],['Lathe Auto (B08-01)','Lathe Auto (B12-13)','Lathe Auto (B12-24)','Lathe Auto (B12-28)']);
+regMach(['Cold Forging (SOP)'],['Cold Forging (SOP)']);
+regMach(['Lathe 1','Lathe 2','Rolling Slit','Deburring'],['Lathe SOP (Set 1)','Lathe SOP (Set 2)']);
+regMach(['Lathe 1','Lathe 2','Lathe 3','Rolling Slit','Deburring'],['Lathe SOP (Set 6)','Lathe SOP (Set 7)']);
+regMach(['Gr 1,2 11070 11090'],['Lathe 2 11070 11090','Gr 1,2 11070 11090']);
+regMach(['Roll Slit'],['Roll Slit SOP']);
+regMach(['Induction'],['Induction']);
+regMach(['Grinding 1','Grinding 2'],['Grinding SOP (Set 3)','Grinding SOP (Set 4)','Grinding SOP (Set 7)']);
+regMach(['Grinding 1','Grinding 2','Roll M9'],['Grinding SOP (Set 5)']);
+regMach(['Grinding 1','Grinding 2','Roll M8'],['Grinding SOP (Set 6)']);
+regMach(['Screening 1'],['Screening 1 SOP']);
+regMach(['Screening 100'],['Screening 100 SOP','Screening 100 SWP','Screening 100 VOP']);
+// SWP
+regMach(['Grind 1'],['Grinding 1 SWP (Set 1)','Grinding 1 SWP (Set 2)']);
+regMach(['Lathe 1','Lathe 2','Grind 2'],['Lathe 1,2 + Gr 2 (Set 1)','Lathe 1,2 + Gr 2 (Set 2)','Lathe 1,2 + Gr 2 (Set 4)']);
+regMach(['Milling'],['Milling Small SWP']);
+regMach(['Deburring'],['Deburring Small SWP']);
+regMach(['Grind'],['Grinding Small SWP']);
+regMach(['Screening 100 SWP (Change Box)'],['Screening 100 SWP (Change Box)']);
+// VOP
+regMach(['Lathing'],['Lathe Auto (B22-01)','Lathe Auto (B23-01)','Lathe Auto (B13-06)','Lathe Auto (B17-16)']);
+regMach(['Drilling'],['Drilling 10290']);
+regMach(['Deburring'],['Deburring 10290']);
+regMach(['Lathe 1','Lathe 2'],['Lathe 1,2 10230']);
+regMach(['Grind 1'],['Grinding 1 VOP']);
+regMach(['Grind 2'],['Grinding 2 VOP']);
+regMach(['Grind 3'],['Grinding 3 VOP']);
+regMach(['Camera'],['Camera']);
+// VBA
+var VBA_OP1=['Lathe OP1 (B23-16)','Lathe OP1 (B23-17)','Lathe OP1 (B15-03)','Lathe OP1 (B10-15)','Lathe OP1 (B13-11)','Lathe OP1 (B15-02)','Lathe OP1 (B12-01)'];
+var VBA_OP2=['Lathe OP2 (B05-07)','Lathe OP2 (B07-07)','Lathe OP2 (B07-04)','Lathe OP2 (B11-32)','Lathe OP2 (B12-23)','Lathe OP2 (B12-29)'];
+regMach(['Lathe 1'],VBA_OP1);
+regMach(['Lathe 1','Lathe 2'],VBA_OP2);
+regMach(['Screening 1 VBA'],['Screening 1 VBA']);
+regMach(['Screening 1 VBA (Plunger)'],['Screening 1 VBA (Plunger)']);
+regMach(['Screening 100 VBA (Plunger)'],['Screening 100 VBA (Plunger)']);
+regMach(['Screening 100 VBA'],['Screening 100 VBA']);
+
+/* ---- ชุด NG ของแต่ละเครื่อง (คีย์ = "กระบวนการ||เครื่อง") ถ้าไม่มีจะ fallback ไป getNgTypesForProcess
+   หมายเหตุ: คีย์ต้องตรงกับชื่อใน machinesByProcess ถึงจะถูกใช้งาน ---- */
+var ngTypesByMachine={};
+function regNg(list,machine,processes){processes.forEach(function(p){ngTypesByMachine[p+'||'+machine]=list})}
+var LA_AUTO=['Lathe Auto (B08-01)','Lathe Auto (B12-13)','Lathe Auto (B12-24)','Lathe Auto (B12-28)'];
+var SWP_LATHE_GR=['Lathe 1,2 + Gr 2 (Set 1)','Lathe 1,2 + Gr 2 (Set 2)','Lathe 1,2 + Gr 2 (Set 4)'];
+var VOP_LATHE=['Lathe Auto (B22-01)','Lathe Auto (B23-01)','Lathe Auto (B13-06)','Lathe Auto (B17-16)'];
+// SOP
+regNg(NG_LATHE2,'Lathe 1',LA_AUTO.concat(VBA_OP1));
+regNg(NG_COLD,'Cold Forging (SOP)',['Cold Forging (SOP)']);
+regNg(NG_LATHE_SOP,'Lathe 1',['Lathe SOP (Set 1)','Lathe SOP (Set 2)','Lathe SOP (Set 6)','Lathe SOP (Set 7)']);
+regNg(NG_LATHE_SOP,'Lathe 2',['Lathe SOP (Set 1)','Lathe SOP (Set 2)','Lathe SOP (Set 6)','Lathe SOP (Set 7)','Lathe 2 11070 11090']);
+regNg(NG_LATHE_SOP,'Lathe 3',['Lathe SOP (Set 6)','Lathe SOP (Set 7)']);
+regNg(NG_ROLL_SET,'Rolling Slit',['Lathe SOP (Set 1)','Lathe SOP (Set 2)','Lathe SOP (Set 6)','Lathe SOP (Set 7)']);
+regNg(NG_ROLL_SLIT,'Roll Slit',['Roll Slit SOP']);
+regNg(NG_INDUCTION,'Induction',['Induction']);
+['Grinding 1','Grinding 2'].forEach(function(m){regNg(NG_DEFAULT,m,['Grinding SOP (Set 3)','Grinding SOP (Set 4)','Grinding SOP (Set 5)','Grinding SOP (Set 6)','Grinding SOP (Set 7)'])});
+regNg(NG_ROLL_M,'Roll M9',['Grinding SOP (Set 5)']);
+regNg(NG_ROLL_M,'Roll M8',['Grinding SOP (Set 6)']);
+regNg(NG_MILL_SOP,'Milling',['Grinding SOP (Set 5)']);
+regNg(NG_DEFAULT,'Gr 1,2',['Gr 1,2 11070 11090']);
+regNg(NG_SCREEN_SOP,'Screening 1',['Screening 1 SOP']);
+regNg(NG_SCREEN_SOP,'Screening 100',['Screening 100 SOP']);
+// SWP
+regNg(NG_GEN,'Grinding 1',['Grinding 1 SWP (Set 1)','Grinding 1 SWP (Set 2)']);
+regNg(NG_GEN,'Lathe 1',SWP_LATHE_GR);
+regNg(NG_GEN,'Lathe 2',SWP_LATHE_GR);
+regNg(NG_SWP_GR2,'Grind 2',SWP_LATHE_GR);
+regNg(NG_SWP_MILL,'Milling',['Milling Small SWP']);
+regNg(NG_COLD,'Deburring',['Deburring Small SWP']);
+regNg(NG_SWP_GRIND,'Grind',['Grinding Small SWP']);
+regNg(NG_SWP_SCREEN,'Screening 100 SWP (Change Box)',['Screening 100 SWP (Change Box)']);
+regNg(NG_SWP_SCREEN,'Screening 100',['Screening 100 SWP']);
+// VOP
+regNg(NG_VOP_LATHE,'Lathing',VOP_LATHE);
+regNg(NG_DRILL,'Drilling',['Drilling 10290']);
+regNg(NG_DEBURR_VOP,'Deburring',['Deburring 10290']);
+regNg(NG_GEN,'Lathe 1,2',['Lathe 1,2 10230']);
+regNg(NG_GEN,'Grind 1',['Grinding 1 VOP']);
+regNg(NG_GEN,'Grind 2',['Grinding 2 VOP']);
+regNg(NG_GEN,'Grind 3',['Grinding 3 VOP']);
+regNg(NG_GEN,'Camera',['Camera']);
+regNg(NG_VOP_SCREEN,'Screening 100',['Screening 100 VOP']);
+// VBA
+VBA_OP2.forEach(function(p){regNg(ngLathe(1),'Lathe 1',[p]);regNg(ngLathe(2),'Lathe 2',[p])});
+regNg(NG_VBA_SCREEN,'Screening 1 VBA',['Screening 1 VBA']);
+regNg(NG_VBA_PLUNGER,'Screening 1 VBA (Plunger)',['Screening 1 VBA (Plunger)']);
+regNg(NG_VBA_PLUNGER,'Screening 100 VBA (Plunger)',['Screening 100 VBA (Plunger)']);
+regNg(NG_VBA_SCREEN,'Screening 100 VBA',['Screening 100 VBA']);
+
+function getMachinesForProcess(p){return machinesByProcess[p]||null}
+function getNgTypesForMachine(process,machine){
+  var key=String(process||'').trim()+'||'+String(machine||'').trim();
+  return ngTypesByMachine.hasOwnProperty(key)?ngTypesByMachine[key]:getNgTypesForProcess(process);
+}
+
+/* ================== สถานะแอป ================== */
+var currentProduct=null,currentProcess=null,currentShift='A',currentDayNight='Day';
+var employees=[],selectedEmps=new Set(),empDropdownOpen=false;
+var partValue='',partDropdownOpen=false;
+var cycleTimeMaster={},processTotals={},historyRecords=[];
+var editRecordId=null,cardsAnimTimer=null;
+var ngData={},ngNote='',ngLotNumber='',ngLotNumber2='',dtNote='',currentNgMachine=null;
+
+function $(id){return document.getElementById(id)}
+
+/* ================== PWA: เชื่อมต่อ API / แคช / คิวออฟไลน์ ================== */
+var API_URL='PASTE_WEB_APP_URL_HERE'; // ← ใส่ Web App URL (ลงท้าย /exec) ของ Apps Script ที่ Deploy ไว้
+var LS_TOKEN='pl_token',LS_QUEUE='pl_queue',LS_EMPQ='pl_empq',LS_CACHE='pl_cache|';
+var netDown=false,syncing=false,warming=false,currentClientId='',deferredInstall=null;
+var historyFromCache=false,historyError='';
+var isInstalledPWA=(window.matchMedia&&(matchMedia('(display-mode: fullscreen)').matches||matchMedia('(display-mode: standalone)').matches))||navigator.standalone===true;
+
+function lsGet(k,def){try{var v=localStorage.getItem(k);return v?JSON.parse(v):def}catch(e){return def}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}}
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function newUuid(){
+  if(window.crypto&&crypto.randomUUID)return crypto.randomUUID();
+  var b=new Uint8Array(16);
+  if(window.crypto&&crypto.getRandomValues)crypto.getRandomValues(b);
+  else for(var i=0;i<16;i++)b[i]=Math.floor(Math.random()*256);
+  b[6]=(b[6]&15)|64;b[8]=(b[8]&63)|128;
+  var h=Array.prototype.map.call(b,function(x){return ('0'+x.toString(16)).slice(-2)}).join('');
+  return h.slice(0,8)+'-'+h.slice(8,12)+'-'+h.slice(12,16)+'-'+h.slice(16,20)+'-'+h.slice(20);
+}
+function apiConfigured(){return !!API_URL&&API_URL.indexOf('PASTE_')===-1}
+function mkErr(msg,kind){var e=new Error(msg);e[kind]=true;return e}
+
+/* เรียก Apps Script ผ่าน fetch (POST แบบ text/plain เพื่อไม่ให้เกิด CORS preflight)
+   error ที่โยนออกมามีธง: network (เน็ตหลุด/หมดเวลา) | auth (รหัสผิด) | server (เซิร์ฟเวอร์ตอบ error) */
+function apiCall(action,args,timeoutMs){
+  if(!apiConfigured())return Promise.reject(mkErr('ยังไม่ได้ตั้งค่า API_URL ใน index.html','server'));
+  if(navigator.onLine===false){netDown=true;updateNetBar();return Promise.reject(mkErr('ออฟไลน์','network'))}
+  var ctrl=('AbortController' in window)?new AbortController():null;
+  var timer=ctrl?setTimeout(function(){ctrl.abort()},timeoutMs||25000):null;
+  function done(){if(timer)clearTimeout(timer)}
+  return fetch(API_URL,{
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:action,args:args||[],token:localStorage.getItem(LS_TOKEN)||''}),
+      redirect:'follow',
+      signal:ctrl?ctrl.signal:undefined
+    })
+    .then(function(r){
+      if(!r.ok)throw mkErr('HTTP '+r.status,'network');
+      return r.json().catch(function(){throw mkErr('เซิร์ฟเวอร์ตอบกลับไม่ถูกต้อง','network')});
+    })
+    .then(function(j){
+      done();netDown=false;updateNetBar();
+      if(j&&j.ok)return j.result;
+      if(j&&j.error==='unauthorized'){onUnauthorized();throw mkErr('รหัสเข้าใช้งานไม่ถูกต้อง','auth')}
+      throw mkErr((j&&j.error)||'ข้อผิดพลาดจากเซิร์ฟเวอร์','server');
+    })
+    .catch(function(e){
+      done();
+      if(!e.server&&!e.auth){netDown=true;e.network=true;updateNetBar()}
+      throw e;
+    });
+}
+
+function gas(name,args,ok,fail){
+  apiCall(name,args).then(function(r){if(ok)ok(r)},function(e){if(fail)fail(e);else console.error('['+name+']',e)});
+}
+
+/* ---- แคชข้อมูลหลักในเครื่อง (ใช้ตอนออฟไลน์) ---- */
+function slimObj(o){ // ตัดค่า 0 ออกเพื่อประหยัดที่ (ตอนเปิดแก้ไขจะเติม 0 กลับให้เอง)
+  if(!o||typeof o!=='object')return o;
+  var out={};
+  Object.keys(o).forEach(function(k){
+    var v=o[k];
+    if(v&&typeof v==='object'){var s=slimObj(v);if(Object.keys(s).length)out[k]=s}
+    else if(Number(v)>0)out[k]=v;
+  });
+  return out;
+}
+function slimRecords(list){
+  return (list||[]).slice(0,300).map(function(r){
+    var c={};for(var k in r)c[k]=r[k];
+    c.downtime=slimObj(r.downtime);c.ng=slimObj(r.ng);
+    return c;
+  });
+}
+function cacheWrite(key,val){
+  if(lsSet(key,{t:Date.now(),v:val}))return;
+  Object.keys(localStorage).forEach(function(k){ // ที่เต็ม: ล้างแคชประวัติเก่า (คิวที่รอส่งไม่ถูกแตะ)
+    if(k.indexOf(LS_CACHE+'getRecordsByProcess')===0&&k!==key)localStorage.removeItem(k);
+  });
+  lsSet(key,{t:Date.now(),v:val});
+}
+function gasCached(name,args,ok,fail,transform){
+  var key=LS_CACHE+name+'|'+JSON.stringify(args);
+  apiCall(name,args).then(function(r){
+    cacheWrite(key,transform?transform(r):r);
+    ok(r,false);
+  },function(e){
+    var c=e.network?lsGet(key,null):null;
+    if(c)ok(c.v,true);
+    else if(fail)fail(e);
+    else console.error('['+name+']',e);
+  });
+}
+function warmCache(){ // โหลดข้อมูลหลักของทุกผลิตภัณฑ์เก็บไว้ ให้ใช้ออฟไลน์ได้แม้ยังไม่เคยเปิดผลิตภัณฑ์นั้น
+  if(warming||!localStorage.getItem(LS_TOKEN)||navigator.onLine===false)return;
+  warming=true;
+  var jobs=[];
+  PRODUCTS.forEach(function(p){
+    ['getCycleTimeMap','getEmployees','getProcessGrandTotals'].forEach(function(n){jobs.push([n,[p.code]])});
+  });
+  (function next(){
+    var j=jobs.shift();
+    if(!j){warming=false;return}
+    apiCall(j[0],j[1]).then(function(r){cacheWrite(LS_CACHE+j[0]+'|'+JSON.stringify(j[1]),r);next()},function(){warming=false});
+  })();
+}
+
+/* ---- คิวบันทึกที่รอส่ง (เฉพาะ "เพิ่มรายการใหม่") ---- */
+function getQueue(){return lsGet(LS_QUEUE,[])}
+function setQueue(q){return lsSet(LS_QUEUE,q)}
+function enqueueRecord(payload){
+  var q=getQueue();
+  if(!q.some(function(x){return x.id===payload.clientId}))q.push({id:payload.clientId,payload:payload,queuedAt:new Date().toISOString(),err:''});
+  return setQueue(q);
+}
+function removeFromQueue(id){setQueue(getQueue().filter(function(x){return x.id!==id}))}
+function markQueueErr(id,msg){setQueue(getQueue().map(function(x){if(x.id===id)x.err=msg;return x}))}
+function pendingRecords(){
+  return getQueue().filter(function(x){return x.payload.product===currentProduct&&x.payload.process===currentProcess})
+    .reverse().map(function(x){
+      var p=x.payload;
+      return {id:x.id,pending:true,err:x.err||'',date:p.date,shift:p.shift,dayNight:p.dayNight,employees:p.employees,
+        process:p.process,partNumber:p.partNumber,totalPcs:p.totalPcs,downtime:p.downtime,ng:p.ng};
+    });
+}
+function pendingTotals(){
+  var t={};
+  getQueue().forEach(function(x){var p=x.payload;if(p.product===currentProduct)t[p.process]=(t[p.process]||0)+(Number(p.totalPcs)||0)});
+  return t;
+}
+function allHistory(){return pendingRecords().concat(historyRecords)}
+
+function addEmployeeRemote(name,product){
+  var key=LS_CACHE+'getEmployees|'+JSON.stringify([product]),c=lsGet(key,null);
+  if(c&&c.v&&c.v.indexOf(name)===-1){c.v.push(name);lsSet(key,c)}
+  apiCall('addEmployee',[name,product]).then(function(){},function(e){
+    if(e.network){var q=lsGet(LS_EMPQ,[]);q.push({name:name,product:product});lsSet(LS_EMPQ,q);updateNetBar()}
+  });
+}
+
+/* ---- ส่งคิวขึ้นเซิร์ฟเวอร์ ----
+   เน็ตหลุดระหว่างส่ง = หยุดแล้วรอรอบหน้า (ไม่เสียข้อมูล) | เซิร์ฟเวอร์ปฏิเสธ = ทำเครื่องหมายแดงไว้ในประวัติ
+   ส่งซ้ำปลอดภัย: เซิร์ฟเวอร์ใช้ clientId กันบันทึกซ้ำ */
+function syncQueue(manual){
+  if(syncing||!apiConfigured()||!localStorage.getItem(LS_TOKEN))return Promise.resolve();
+  var hasWork=getQueue().some(function(x){return manual||!x.err})||lsGet(LS_EMPQ,[]).length>0;
+  if(!hasWork){updateNetBar();return Promise.resolve()}
+  syncing=true;updateNetBar();
+  var sent=0,problems=0,ids=null,i=0;
+
+  function dropEmp(){lsSet(LS_EMPQ,lsGet(LS_EMPQ,[]).slice(1))}
+  function stepEmp(){
+    var eq=lsGet(LS_EMPQ,[]);
+    if(!eq.length)return Promise.resolve();
+    return apiCall('addEmployee',[eq[0].name,eq[0].product]).then(function(){
+      dropEmp();return stepEmp();
+    },function(e){
+      if(e.server){dropEmp();return stepEmp()}
+      throw e;
+    });
+  }
+  function stepRec(){
+    if(ids===null)ids=getQueue().filter(function(x){return manual||!x.err}).map(function(x){return x.id});
+    if(i>=ids.length)return Promise.resolve();
+    var id=ids[i++];
+    var item=getQueue().find(function(x){return x.id===id});
+    if(!item)return stepRec();
+    return apiCall('saveRecord',[item.payload],30000).then(function(res){
+      if(res&&res.success){removeFromQueue(id);sent++}
+      else if(res&&res.retry)throw mkErr('busy','network');
+      else{markQueueErr(id,(res&&res.error)||'ไม่ทราบสาเหตุ');problems++}
+      return stepRec();
+    },function(e){
+      if(e.server){markQueueErr(id,e.message);problems++;return stepRec()}
+      throw e;
+    });
+  }
+
+  return stepEmp().then(stepRec).catch(function(){}).then(function(){
+    syncing=false;updateNetBar();
+    if(sent){
+      showToast('✓ ส่งข้อมูลที่ค้างไว้แล้ว '+sent+' รายการ');
+      if(currentProduct)loadProcessTotals();
+      if($('entryView').classList.contains('active')&&$('historyPanel').style.display==='block')loadProcessHistory();
+    }
+    if(problems)showToast('⚠️ มี '+problems+' รายการที่เซิร์ฟเวอร์ไม่รับ — ดูข้อความสีแดงในประวัติ',true);
+    else if(manual&&!sent)showToast((navigator.onLine===false||netDown)?'ยังไม่มีสัญญาณ — ลองใหม่ภายหลัง':'ไม่มีรายการค้างส่ง',true);
+  });
+}
+
+/* ---- แถบสถานะ ออฟไลน์ / รอส่ง ---- */
+function updateNetBar(){
+  var bar=$('netBar');if(!bar)return;
+  var q=getQueue(),eq=lsGet(LS_EMPQ,[]);
+  var errN=q.filter(function(x){return x.err}).length,pend=q.length+eq.length;
+  var off=navigator.onLine===false||netDown;
+  var txt='',cls='',btn=false;
+  if(syncing){txt='⏳ กำลังส่งข้อมูลที่ค้างไว้...';cls='pend'}
+  else if(errN){txt='⚠️ มี '+errN+' รายการส่งไม่สำเร็จ'+(pend>errN?' · รอส่ง '+(pend-errN)+' รายการ':'')+' — ดูข้อความสีแดงในประวัติ';cls='bad';btn=true}
+  else if(off){txt='📴 ออฟไลน์ — บันทึกใหม่จะเก็บไว้ในเครื่อง'+(pend?' (รอส่ง '+pend+' รายการ)':'');cls='off';btn=pend>0}
+  else if(pend){txt='⏳ รอส่ง '+pend+' รายการ';cls='pend';btn=true}
+  if(!txt){bar.className='';bar.innerHTML='';return}
+  bar.className='show '+cls;
+  bar.innerHTML='<span>'+txt+'</span>'+(btn?'<button type="button" onclick="syncQueue(true)">ส่งตอนนี้</button>':'');
+}
+
+/* ---- ตั้งค่าเครื่อง: รหัสเข้าใช้งาน ---- */
+function showSetup(msg){
+  $('setupMsg').textContent=msg||'';
+  $('setupOverlay').classList.remove('hidden');
+  setTimeout(function(){$('setupCode').focus()},150);
+}
+function onUnauthorized(){
+  localStorage.removeItem(LS_TOKEN);
+  showSetup('รหัสไม่ถูกต้องหรือถูกเปลี่ยนแล้ว — กรุณากรอกรหัสใหม่');
+}
+function submitSetup(){
+  var code=$('setupCode').value.trim();
+  if(!code){$('setupMsg').textContent='กรุณากรอกรหัส';return}
+  if(!apiConfigured()){$('setupMsg').textContent='ยังไม่ได้ตั้งค่า API_URL ใน index.html';return}
+  var btn=$('setupBtn');btn.disabled=true;$('setupMsg').textContent='';
+  localStorage.setItem(LS_TOKEN,code);
+  apiCall('ping',[],15000).then(function(){
+    btn.disabled=false;$('setupCode').value='';
+    $('setupOverlay').classList.add('hidden');
+    showToast('✓ ตั้งค่าเครื่องเรียบร้อย');
+    afterReady();
+  },function(e){
+    btn.disabled=false;
+    if(e.auth)return; // onUnauthorized แสดงข้อความให้แล้ว
+    localStorage.removeItem(LS_TOKEN);
+    $('setupMsg').textContent=e.network?'ติดต่อเซิร์ฟเวอร์ไม่ได้ — ต้องต่อเน็ตตอนตั้งค่าครั้งแรก':e.message;
+  });
+}
+function afterReady(){warmCache();syncQueue(false)}
+
+/* ---- ปุ่มติดตั้งแอป ---- */
+window.addEventListener('beforeinstallprompt',function(e){
+  e.preventDefault();deferredInstall=e;
+  var b=$('installBtn');if(b)b.style.display='flex';
+});
+window.addEventListener('appinstalled',function(){
+  deferredInstall=null;
+  var b=$('installBtn');if(b)b.style.display='none';
+});
+function installApp(){
+  if(!deferredInstall)return;
+  deferredInstall.prompt();
+  deferredInstall.userChoice.then(function(){deferredInstall=null;$('installBtn').style.display='none'});
+}
+
+function cycleTimeKey(p,part){return String(p||'').trim()+'||'+String(part||'').trim()}
+function isScreeningProcess(p){return String(p||'').toLowerCase().indexOf('screening')>-1}
+function formatNum(n){return (n||0).toLocaleString('en-US')}
+
+function sumFlat(obj){
+  if(!obj)return 0;
+  return Object.keys(obj).reduce(function(s,k){
+    var v=obj[k];
+    return s+((typeof v==='object'&&v!==null)?sumFlat(v):(parseInt(v)||0));
+  },0);
+}
+
+function rebuildNgData(process,sourceNg){
+  var machines=getMachinesForProcess(process);
+  var out={};
+  if(machines&&machines.length){
+    machines.forEach(function(m){
+      var src=(sourceNg&&typeof sourceNg[m]==='object'&&sourceNg[m]!==null)?sourceNg[m]:null;
+      var obj={};
+      getNgTypesForMachine(process,m).forEach(function(t){obj[t]=(src&&src.hasOwnProperty(t))?(parseInt(src[t])||0):0});
+      if(src)Object.keys(src).forEach(function(t){if(!obj.hasOwnProperty(t))obj[t]=parseInt(src[t])||0});
+      out[m]=obj;
+    });
+  }else{
+    getNgTypesForProcess(process).forEach(function(t){
+      var v=sourceNg?sourceNg[t]:undefined;
+      out[t]=(v!==undefined&&typeof v!=='object')?(parseInt(v)||0):0;
+    });
+    if(sourceNg)Object.keys(sourceNg).forEach(function(t){
+      if(typeof sourceNg[t]!=='object'&&!out.hasOwnProperty(t))out[t]=parseInt(sourceNg[t])||0;
+    });
+  }
+  ngData=out;
+}
+rebuildNgData(null);
+
+/* ================== วันที่ / เวลา (เวลาไทย) ================== */
+function dateStrInFactoryTZ(date){
+  var p=new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Bangkok',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(date||new Date());
+  function g(t){return p.find(function(x){return x.type===t}).value}
+  return g('year')+'-'+g('month')+'-'+g('day');
+}
+function todayStr(){return dateStrInFactoryTZ(new Date())}
+function yesterdayStr(){return dateStrInFactoryTZ(new Date(Date.now()-864e5))}
+
+/* เดา Day/Night: 06:00–17:59 = Day (แก้เวลาเข้า-ออกกะที่สองตัวแปรนี้) */
+var DAY_SHIFT_START_HOUR=6,DAY_SHIFT_END_HOUR=18;
+function guessDayNight(){
+  var hp=new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Bangkok',hour:'numeric',hourCycle:'h23'}).formatToParts(new Date()).find(function(p){return p.type==='hour'});
+  var h=hp?(Number(hp.value)%24):12;
+  return(h>=DAY_SHIFT_START_HOUR&&h<DAY_SHIFT_END_HOUR)?'Day':'Night';
+}
+
+function formatDisplayDate(iso){
+  var p=(iso||'').split('-');
+  return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:(iso||'');
+}
+function setDateValue(iso){
+  $('dateField').value=iso;
+  $('dateDisplay').value=formatDisplayDate(iso);
+}
+function formatDateHeader(d){
+  var p=(d||'').split('-');
+  return p.length===3?parseInt(p[2],10)+'/'+parseInt(p[1],10)+'/'+p[0]:(d||'-');
+}
+
+/* ===== ปฏิทินกำหนดเอง (native date picker บางแท็บเล็ตเปิดไม่ได้/หลุดเต็มจอ) ===== */
+var calViewYear=null,calViewMonth=null;
+var thaiMonthNames=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+var thaiWeekdayShort=['อา','จ','อ','พ','พฤ','ศ','ส'];
+function pad2(n){return n<10?'0'+n:''+n}
+
+function openDatePicker(){
+  var p=($('dateField').value||todayStr()).split('-');
+  calViewYear=parseInt(p[0],10);calViewMonth=parseInt(p[1],10)-1;
+  renderCalendar();
+  $('dateOverlay').classList.remove('hidden');
+}
+function closeDatePicker(){$('dateOverlay').classList.add('hidden')}
+function calChangeMonth(d){
+  calViewMonth+=d;
+  if(calViewMonth<0){calViewMonth=11;calViewYear--}
+  else if(calViewMonth>11){calViewMonth=0;calViewYear++}
+  renderCalendar();
+}
+function calGoToday(){selectCalendarDate(todayStr())}
+function selectCalendarDate(iso){setDateValue(iso);closeDatePicker()}
+
+function renderCalendar(){
+  $('calTitle').textContent=thaiMonthNames[calViewMonth]+' '+(calViewYear+543);
+  var wd=$('calWeekdays');wd.innerHTML='';
+  thaiWeekdayShort.forEach(function(w){var s=document.createElement('span');s.textContent=w;wd.appendChild(s)});
+
+  var grid=$('calGrid');grid.innerHTML='';
+  var selected=$('dateField').value,today=todayStr();
+  var startWeekday=new Date(Date.UTC(calViewYear,calViewMonth,1)).getUTCDay();
+  var daysInMonth=new Date(Date.UTC(calViewYear,calViewMonth+1,0)).getUTCDate();
+  var daysInPrev=new Date(Date.UTC(calViewYear,calViewMonth,0)).getUTCDate();
+  var total=Math.ceil((startWeekday+daysInMonth)/7)*7;
+
+  for(var i=0;i<total;i++){
+    var day,y=calViewYear,m=calViewMonth,other=false;
+    if(i<startWeekday){day=daysInPrev-(startWeekday-1-i);m--;if(m<0){m=11;y--}other=true}
+    else if(i>=startWeekday+daysInMonth){day=i-(startWeekday+daysInMonth)+1;m++;if(m>11){m=0;y++}other=true}
+    else day=i-startWeekday+1;
+    var iso=y+'-'+pad2(m+1)+'-'+pad2(day);
+    var cell=document.createElement('div');
+    cell.className='cal-day'+(other?' other-month':'')+(iso===today?' today':'')+(iso===selected?' selected':'');
+    cell.textContent=day;
+    cell.onclick=(function(v){return function(){selectCalendarDate(v)}})(iso);
+    grid.appendChild(cell);
+  }
+}
+
+function selectShift(s){
+  currentShift=s;
+  $('shiftA').classList.toggle('active',s==='A');
+  $('shiftB').classList.toggle('active',s==='B');
+}
+function selectDayNight(v){
+  currentDayNight=v;
+  $('dayBtn').classList.toggle('active',v==='Day');
+  $('nightBtn').classList.toggle('active',v==='Night');
+}
+
+/* ================== โหลดข้อมูลจากชีต ================== */
+function loadCycleTimeMaster(){
+  var prod=currentProduct;
+  gasCached('getCycleTimeMap',[prod],function(r){if(prod===currentProduct)cycleTimeMaster=r||{}},function(e){cycleTimeMaster={};console.error('[CycleTime]',e)});
+}
+function loadEmployees(){
+  var prod=currentProduct;
+  gasCached('getEmployees',[prod],function(r){
+    if(prod!==currentProduct)return;
+    employees=(r||[]).slice();
+    lsGet(LS_EMPQ,[]).forEach(function(x){if(x.product===prod&&employees.indexOf(x.name)===-1)employees.push(x.name)});
+    if(empDropdownOpen)renderEmpItems($('empSearch').value);
+  },function(e){employees=[];console.error('[Employees]',e)});
+}
+function loadProcessTotals(){
+  var prod=currentProduct;
+  function redraw(){renderProcessList($('processSearch').value)}
+  gasCached('getProcessGrandTotals',[prod],function(r){if(prod!==currentProduct)return;processTotals=r||{};redraw()},redraw);
+}
+function loadProcessHistory(){
+  var c=$('historyListContainer'),prod=currentProduct,proc=currentProcess;
+  historyError='';historyFromCache=false;
+  if(!historyRecords.length&&!pendingRecords().length)c.innerHTML='<div class="empty-state">Downloading...</div>';
+  else renderProcessHistory();
+  gasCached('getRecordsByProcess',[prod,proc],function(r,fromCache){
+    if(prod!==currentProduct||proc!==currentProcess)return;
+    historyRecords=r||[];historyFromCache=!!fromCache;renderProcessHistory();
+  },function(err){
+    if(prod!==currentProduct||proc!==currentProcess)return;
+    historyRecords=[];
+    historyError=err.network?'📴 ออฟไลน์ — ยังไม่มีประวัติของกระบวนการนี้เก็บไว้ในเครื่อง (ยังบันทึกรายการใหม่ได้ตามปกติ)':'❌ โหลดข้อมูลไม่สำเร็จ: '+err.message;
+    renderProcessHistory();
+  },slimRecords);
+}
+
+function updateCycleTimeField(){
+  var key=cycleTimeKey(currentProcess,partValue);
+  $('cycleTimeField').value=cycleTimeMaster.hasOwnProperty(key)?cycleTimeMaster[key]:'';
+  updateLiveSummary();
+}
+
+/* ================== VIEW 0: เมนูผลิตภัณฑ์ ================== */
+function renderProductMenu(){
+  var c=$('productGrid');c.innerHTML='';
+  PRODUCTS.forEach(function(p,i){
+    var tile=document.createElement('div');
+    tile.className='product-tile '+p.cls+' row-fade-in';
+    tile.style.animationDelay=Math.min(i*40,200)+'ms';
+    tile.innerHTML='<span class="code">'+p.code+'</span><span class="info"><span class="full-name">'+p.full+'</span></span><span class="chev">›</span>';
+    tile.onclick=function(){openProduct(p.code)};
+    c.appendChild(tile);
+  });
+}
+
+function openProduct(code){
+  currentProduct=code;
+  processTotals={};
+  $('processSearch').value='';
+  var p=PRODUCTS.find(function(x){return x.code===code});
+  $('listViewProductLabel').textContent=code+' — '+(p?p.full:'');
+  renderProcessList('');
+  loadProcessTotals();loadCycleTimeMaster();loadEmployees();
+  switchView($('menuView'),$('listView'),'right');
+}
+function backToMenu(){switchView($('listView'),$('menuView'),'left')}
+
+function renderProcessList(filter){
+  filter=(filter||'').trim().toLowerCase();
+  var c=$('processListContainer');c.innerHTML='';
+  var all=processesByProduct[currentProduct]||[];
+  if(!all.length){c.innerHTML='<div class="empty-state">ยังไม่มีการตั้งค่ากระบวนการสำหรับผลิตภัณฑ์นี้<br>กรุณาติดต่อผู้ดูแลระบบเพื่อเพิ่มรายชื่อกระบวนการ</div>';return}
+  var list=all.filter(function(p){return p.toLowerCase().indexOf(filter)>-1});
+  if(!list.length){c.innerHTML='<div class="empty-state">ไม่พบกระบวนการที่ค้นหา</div>';return}
+  var pt=pendingTotals();
+  list.forEach(function(p,i){
+    var row=document.createElement('div');row.className='process-row row-fade-in';
+    row.style.animationDelay=Math.min(i*25,300)+'ms';
+    var hasT=Object.prototype.hasOwnProperty.call(processTotals,p)||pt[p]>0;
+    var count=hasT
+      ?'<span class="process-count pop">'+formatNum((processTotals[p]||0)+(pt[p]||0))+'</span>'
+      :'<span class="process-count empty">—</span>';
+    row.innerHTML='<span class="process-name">'+p+'</span><span class="process-right">'+count+'<span class="process-chevron">›</span></span>';
+    row.onclick=function(){openEntry(p)};
+    c.appendChild(row);
+  });
+}
+
+function switchView(fromEl,toEl,direction){
+  fromEl.classList.remove('active');
+  toEl.classList.remove('anim-right','anim-left');
+  toEl.classList.add('active',direction==='right'?'anim-right':'anim-left');
+  window.scrollTo(0,0);
+  setTimeout(function(){toEl.classList.remove('anim-right','anim-left')},300);
+}
+
+function openEntry(p){
+  currentProcess=p;editRecordId=null;
+  historyRecords=[]; // กันเติมข้อมูลข้ามกระบวนการ
+  $('selectedProductLabel').textContent='กระบวนการ · '+currentProduct;
+  $('selectedProcessLabel').textContent=p;
+  showHistoryPanel();
+  switchView($('listView'),$('entryView'),'right');
+}
+function backToList(){
+  $('fabAddBtn').classList.remove('visible');
+  switchView($('entryView'),$('listView'),'left');
+}
+function showHistoryPanel(){
+  $('formPanel').style.display='none';
+  $('historyPanel').style.display='block';
+  $('fabAddBtn').classList.add('visible');
+  window.scrollTo(0,0);
+  loadProcessHistory();
+}
+function showFormPanel(){
+  $('historyPanel').style.display='none';
+  $('formPanel').style.display='block';
+  $('fabAddBtn').classList.remove('visible');
+  var panel=$('formPanel');
+  if(cardsAnimTimer)clearTimeout(cardsAnimTimer);
+  panel.classList.remove('entryView-cards');
+  void panel.offsetWidth;
+  panel.classList.add('entryView-cards');
+  cardsAnimTimer=setTimeout(function(){panel.classList.remove('entryView-cards');cardsAnimTimer=null},650);
+  window.scrollTo(0,0);
+}
+
+/* ================== เติมค่าอัตโนมัติ / คัดลอกจากรายการก่อนหน้า ==================
+   ปุ่ม ＋ : เติม กะ/พนักงาน/Part จากรายการล่าสุด (วันนี้-เมื่อวาน) | ไอคอน 📋 : คัดลอกจากรายการที่เลือก
+   ตัวเลขผลผลิต เวลา Losstime NG ไม่ถูกคัดลอก เพื่อกันข้อมูลซ้ำ */
+function showPrefillBanner(t){$('prefillText').textContent=t;$('prefillBanner').style.display='flex'}
+function hidePrefillBanner(){$('prefillBanner').style.display='none'}
+
+function setPartUI(v){
+  partValue=v||'';
+  $('partInput').value=partValue;
+  $('partWrap').classList.toggle('has-value',!!partValue);
+}
+function carryOverFrom(rec){
+  selectShift(rec.shift==='Shift B'?'B':'A');
+  selectedEmps=new Set(rec.employees||[]);
+  renderEmpTags();
+  setPartUI(rec.partNumber);
+  updateCycleTimeField();
+}
+function clearPrefill(){
+  selectShift('A');selectedEmps.clear();renderEmpTags();
+  setPartUI('');
+  $('cycleTimeField').value='';
+  updateLiveSummary();hidePrefillBanner();
+}
+
+function showAddForm(src){
+  editRecordId=null;
+  resetForm();
+  $('editBanner').style.display='none';
+  hidePrefillBanner();
+  if(src&&src.id){
+    setDateValue(src.date||todayStr());
+    selectDayNight(src.dayNight==='Night'?'Night':'Day');
+    carryOverFrom(src);
+    showPrefillBanner('คัดลอก กะ / พนักงาน / Part จากรายการวันที่ '+formatDisplayDate(src.date)+' แล้ว — ตรวจสอบก่อนบันทึก');
+  }else{
+    setDateValue(todayStr());
+    selectDayNight(guessDayNight());
+    var latest=allHistory()[0];
+    if(latest&&latest.date&&String(latest.date)>=yesterdayStr()){
+      carryOverFrom(latest);
+      showPrefillBanner('เติม กะ / พนักงาน / Part จากรายการล่าสุดของกระบวนการนี้แล้ว — ตรวจสอบก่อนบันทึก');
+    }
+  }
+  $('submitBtn').innerHTML='💾 บันทึกข้อมูล';
+  showFormPanel();
+}
+
+function showEditForm(record){
+  editRecordId=record.id;
+  populateFormFromRecord(record);
+  hidePrefillBanner();
+  $('editBanner').style.display='block';
+  $('submitBtn').innerHTML='💾 อัปเดตข้อมูล';
+  showFormPanel();
+}
+
+function populateFormFromRecord(r){
+  setDateValue(r.date);
+  selectShift(r.shift==='Shift B'?'B':'A');
+  selectDayNight(r.dayNight==='Night'?'Night':'Day');
+  selectedEmps=new Set(r.employees||[]);
+  renderEmpTags();
+  setPartUI(r.partNumber);
+  $('totalPcs').value=r.totalPcs||'';
+  $('actualTime').value=r.actualTime||'';
+  $('machineIssue').value=r.machineIssue||'';
+  if(r.cycleTime!==undefined&&r.cycleTime!=='')$('cycleTimeField').value=r.cycleTime;
+  else updateCycleTimeField();
+  Object.keys(dtData).forEach(function(cat){
+    Object.keys(dtData[cat]).forEach(function(name){
+      dtData[cat][name]=(r.downtime&&r.downtime[cat]&&r.downtime[cat][name])||0;
+    });
+  });
+  rebuildNgData(r.process||currentProcess,r.ng);
+  ngNote=r.ngNote||'';ngLotNumber=r.lotNumber||'';ngLotNumber2=r.lotNumber2||'';
+  dtNote=r.downtimeNote||'';
+  updateDtBadge();
+  renderNgButtons();
+  updateLiveSummary();
+}
+
+/* ================== ประวัติ ================== */
+function renderProcessHistory(){
+  var c=$('historyListContainer');c.innerHTML='';
+  function note(text){var n=document.createElement('div');n.className='history-note';n.textContent=text;c.appendChild(n)}
+  if(historyFromCache)note('📴 แสดงข้อมูลที่เก็บไว้ในเครื่อง — อาจไม่ใช่ข้อมูลล่าสุด');
+  if(historyError)note(historyError);
+
+  var q=($('historySearch').value||'').trim().toLowerCase();
+  var list=allHistory().filter(function(r){return !q||(r.partNumber||'').toLowerCase().indexOf(q)>-1});
+  if(!list.length){
+    if(!historyError){
+      var em=document.createElement('div');em.className='empty-state';
+      em.innerHTML='ยังไม่มีข้อมูลที่บันทึกไว้สำหรับกระบวนการนี้<br>กดปุ่ม "＋ เพิ่มข้อมูลใหม่" เพื่อเริ่มบันทึก';
+      c.appendChild(em);
+    }
+    return;
+  }
+  var order=[],groups={};
+  list.forEach(function(r){
+    var d=r.date||'-';
+    if(!groups[d]){groups[d]=[];order.push(d)}
+    groups[d].push(r);
+  });
+  order.sort(function(a,b){return a===b?0:(a<b?1:-1)}); // ล่าสุดก่อน
+
+  var delay=0;
+  order.forEach(function(dateKey){
+    var recs=groups[dateKey];
+    var dateTotal=recs.reduce(function(s,r){return s+(Number(r.totalPcs)||0)},0);
+    var header=document.createElement('div');header.className='history-date-header row-fade-in';
+    header.style.animationDelay=Math.min(delay++*30,300)+'ms';
+    header.innerHTML='<span class="history-date-label">'+formatDateHeader(dateKey)+'</span><span class="history-date-badge">'+formatNum(dateTotal)+'</span>';
+    c.appendChild(header);
+
+    recs.forEach(function(r){
+      var isP=!!r.pending;
+      var dt=sumFlat(r.downtime),ng=sumFlat(r.ng);
+      var flags=(dt>0?'<span class="flag-chip">⏸ Loss Time '+dt+'</span>':'')+(ng>0?'<span class="flag-chip ng">⚠️ NG '+ng+'</span>':'');
+      if(isP)flags=(r.err?'<span class="flag-chip ng">⚠️ ส่งไม่สำเร็จ: '+esc(r.err)+'</span>':'<span class="flag-chip pend">⏳ รอส่ง</span>')+flags;
+      var icons=isP
+        ?'<button class="history-icon-btn delete" title="ลบ" onclick="deleteHistoryRecord(\''+r.id+'\',event)">🗑</button>'
+        :'<button class="history-icon-btn delete" title="ลบ" onclick="deleteHistoryRecord(\''+r.id+'\',event)">🗑</button>'+
+         '<button class="history-icon-btn" title="แก้ไข" onclick="historyAction(\''+r.id+'\',event,showEditForm)">✎</button>'+
+         '<button class="history-icon-btn" title="คัดลอก กะ/พนักงาน/Part ไปเพิ่มรายการใหม่" onclick="historyAction(\''+r.id+'\',event,showAddForm)">📋</button>';
+      var entry=document.createElement('div');entry.className='history-entry row-fade-in';
+      entry.style.animationDelay=Math.min(delay++*30,300)+'ms';
+      entry.innerHTML=
+        '<div class="history-entry-row"><span class="history-entry-process">'+esc(r.process)+'</span><span class="history-entry-emp">'+esc((r.employees&&r.employees.length)?r.employees.join(', '):'-')+'</span></div>'+
+        '<div class="history-entry-row"><span class="history-entry-shift">'+(r.shift==='Shift B'?'B':'A')+'</span>'+
+          '<span class="history-entry-icons">'+icons+'</span></div>'+
+        (flags?'<div class="history-issue-flags">'+flags+'</div>':'');
+      entry.onclick=isP
+        ?function(){showToast('รายการนี้ยังไม่ได้ส่งขึ้นระบบ — แก้ไขได้หลังส่งสำเร็จ')}
+        :function(){showEditForm(r)};
+      c.appendChild(entry);
+    });
+  });
+}
+
+function historyAction(id,e,fn){
+  if(e)e.stopPropagation();
+  var rec=historyRecords.find(function(r){return String(r.id)===String(id)});
+  if(rec)fn(rec);
+}
+
+function deleteHistoryRecord(id,e){
+  if(e)e.stopPropagation();
+  var isP=getQueue().some(function(x){return x.id===id});
+  showConfirmDialog(isP?'ต้องการลบรายการที่รอส่งนี้ออกจากเครื่องใช่หรือไม่?':'ต้องการลบข้อมูลนี้ใช่หรือไม่? การลบไม่สามารถย้อนกลับได้','ลบข้อมูล').then(function(ok){
+    if(!ok)return;
+    if(isP){
+      removeFromQueue(id);
+      showToast('✓ ลบรายการที่รอส่งแล้ว');
+      updateNetBar();loadProcessTotals();renderProcessHistory();
+      return;
+    }
+    gas('deleteRecord',[id,currentProduct],function(r){
+      if(r&&r.success){showToast('✓ ลบข้อมูลสำเร็จ');loadProcessTotals();loadProcessHistory()}
+      else showToast('❌ '+(r&&r.error?r.error:'ลบไม่สำเร็จ'),true);
+    },function(err){showToast(err.network?'❌ ออฟไลน์ — ลบได้เฉพาะตอนมีสัญญาณ':'❌ '+err.message,true)});
+  });
+}
+
+/* ================== Part Number ================== */
+function renderPartItems(filter){
+  filter=(filter||'').trim().toLowerCase();
+  var c=$('partItems');c.innerHTML='';
+  var all=partsByProduct[currentProduct]||[];
+  function note(t){var d=document.createElement('div');d.className='dd-item';d.style.color='var(--ink-faint)';d.style.cursor='default';d.textContent=t;c.appendChild(d)}
+  if(!all.length)return note('ยังไม่มี Part Number สำหรับผลิตภัณฑ์นี้');
+  var list=all.filter(function(p){return p.toLowerCase().indexOf(filter)>-1});
+  if(!list.length)return note('ไม่พบ Part Number');
+  list.forEach(function(name){
+    var div=document.createElement('div');div.className='dd-item'+(partValue===name?' selected':'');
+    div.innerHTML='<span class="checkmark">'+(partValue===name?'✓':'')+'</span>'+name;
+    div.onclick=function(e){e.stopPropagation();selectPart(name)};
+    c.appendChild(div);
+  });
+}
+function selectPart(name){setPartUI(name);closePartDropdown();updateCycleTimeField()}
+function clearPart(e){
+  if(e)e.stopPropagation();
+  setPartUI('');
+  $('cycleTimeField').value='';
+  updateLiveSummary();
+  $('partInput').focus();
+  openPartDropdown();
+}
+function onPartInput(){
+  var typed=$('partInput').value;
+  if(typed!==partValue){partValue='';$('partWrap').classList.remove('has-value')}
+  if(!partDropdownOpen)openPartDropdown();
+  renderPartItems(typed);
+}
+function openPartDropdown(){
+  if(partDropdownOpen)return;
+  partDropdownOpen=true;
+  $('partDropdownList').classList.add('open');
+  $('partWrap').classList.add('open');
+  renderPartItems($('partInput').value);
+}
+function closePartDropdown(){
+  partDropdownOpen=false;
+  $('partDropdownList').classList.remove('open');
+  $('partWrap').classList.remove('open');
+}
+
+/* ================== พนักงาน ================== */
+function renderEmpTags(){
+  var c=$('empTags'),ph=$('empPlaceholder');
+  c.querySelectorAll('.tag').forEach(function(t){t.remove()});
+  ph.style.display=selectedEmps.size?'none':'';
+  Array.from(selectedEmps).forEach(function(name){
+    var tag=document.createElement('span');tag.className='tag';
+    tag.innerHTML=name+' <span class="tag-x" onclick="removeEmp(\''+name+'\',event)">×</span>';
+    c.insertBefore(tag,$('empArrow'));
+  });
+}
+function removeEmp(name,e){e.stopPropagation();selectedEmps.delete(name);renderEmpTags();renderEmpItems('')}
+function setEmpDropdown(open){
+  empDropdownOpen=open;
+  $('empList').classList.toggle('open',open);
+  $('empTags').classList.toggle('open',open);
+  $('empArrow').textContent=open?'▴':'▾';
+}
+function toggleEmpDropdown(){
+  setEmpDropdown(!empDropdownOpen);
+  if(empDropdownOpen){renderEmpItems('');setTimeout(function(){$('empSearch').focus()},100)}
+}
+function renderEmpItems(filter){
+  var c=$('empItems');c.innerHTML='';
+  employees.filter(function(n){return n.indexOf(filter||'')>-1}).forEach(function(name){
+    var div=document.createElement('div');div.className='dd-item'+(selectedEmps.has(name)?' selected':'');
+    div.innerHTML='<span class="checkmark">'+(selectedEmps.has(name)?'✓':'')+'</span>'+name;
+    div.onclick=function(e){
+      e.stopPropagation();
+      if(selectedEmps.has(name))selectedEmps.delete(name);else selectedEmps.add(name);
+      renderEmpTags();renderEmpItems($('empSearch').value);
+    };
+    c.appendChild(div);
+  });
+}
+function addNewEmployee(){
+  showPromptDialog('ชื่อพนักงานใหม่').then(function(name){
+    if(name&&name.trim()){
+      employees.push(name.trim());
+      addEmployeeRemote(name.trim(),currentProduct);
+      renderEmpItems($('empSearch').value);
+    }
+  });
+}
+
+/* ===== confirm/prompt กำหนดเอง (native dialog ทำให้หลุดโหมดเต็มจอ) ===== */
+var confirmResolve=null,promptResolve=null;
+function showConfirmDialog(message,title){
+  return new Promise(function(resolve){
+    confirmResolve=resolve;
+    $('confirmTitle').textContent=title||'ยืนยัน';
+    $('confirmMessage').textContent=message;
+    $('confirmOverlay').classList.remove('hidden');
+  });
+}
+function closeConfirmDialog(result){
+  $('confirmOverlay').classList.add('hidden');
+  if(confirmResolve){confirmResolve(result);confirmResolve=null}
+}
+function showPromptDialog(title,def){
+  return new Promise(function(resolve){
+    promptResolve=resolve;
+    $('promptTitle').textContent=title||'กรอกข้อมูล';
+    var f=$('promptInputField');f.value=def||'';
+    $('promptOverlay').classList.remove('hidden');
+    setTimeout(function(){f.focus()},150);
+  });
+}
+function closePromptDialog(){
+  $('promptOverlay').classList.add('hidden');
+  if(promptResolve){promptResolve(null);promptResolve=null}
+}
+function submitPromptDialog(){
+  var v=$('promptInputField').value;
+  $('promptOverlay').classList.add('hidden');
+  if(promptResolve){promptResolve(v);promptResolve=null}
+}
+
+/* ================== Losstime / NG ================== */
+function makeCounter(obj,cat,name,opts){
+  opts=opts||{};
+  var holder=cat?obj[cat]:obj;
+  var row=document.createElement('div');row.className='dt-row';
+  var nameSpan=document.createElement('span');nameSpan.className='dt-name';nameSpan.textContent=name;
+  var counter=document.createElement('div');counter.className='counter';
+
+  function btn(txt,cls){var b=document.createElement('button');b.className=cls;b.type='button';b.textContent=txt;return b}
+  var minus=btn('−','cnt-btn'),plus=btn('+','cnt-btn');
+  var inp=document.createElement('input');
+  inp.type='number';inp.className='cnt-inp';inp.min='0';inp.placeholder='0';
+  inp.setAttribute('inputmode','numeric');
+  inp.value=holder[name]?holder[name]:'';
+
+  function getVal(){return parseInt(inp.value)||0}
+  function notify(){if(opts.onChange)opts.onChange()}
+  function setVal(v){v=Math.max(0,v);holder[name]=v;inp.value=v?v:'';notify()}
+  minus.onclick=function(){setVal(getVal()-1)};
+  plus.onclick=function(){setVal(getVal()+1)};
+  inp.oninput=function(){var v=parseInt(inp.value);holder[name]=(isNaN(v)||v<0)?0:v;notify()};
+  inp.onblur=function(){inp.value=holder[name]?holder[name]:''};
+
+  counter.appendChild(minus);counter.appendChild(inp);counter.appendChild(plus);
+  (opts.quick||[]).forEach(function(q){
+    var qb=btn('+'+q,'cnt-btn quick');
+    qb.onclick=function(){setVal(getVal()+q)};
+    counter.appendChild(qb);
+  });
+  row.appendChild(nameSpan);row.appendChild(counter);
+  return row;
+}
+
+function updateDtBadge(){
+  var t=sumFlat(dtData),b=$('dtBadge');
+  b.textContent=t>0?t+' รายการ':'ยังไม่มีข้อมูล';
+  b.className=t>0?'badge active-amber':'badge';
+  return b;
+}
+
+function buildDtContent(){
+  var div=$('dtContent');div.innerHTML='';
+  var bar=document.createElement('div');bar.className='modal-total';
+  bar.innerHTML='<span>รวม Losstime</span><span><span class="num" id="dtModalTotal">0</span> นาที</span>';
+  div.appendChild(bar);
+
+  var sumEls={};
+  function refreshDt(){
+    $('dtModalTotal').textContent=formatNum(sumFlat(dtData));
+    Object.keys(sumEls).forEach(function(cat){
+      var t=sumFlat(dtData[cat]);
+      sumEls[cat].textContent=t>0?(formatNum(t)+' นาที'):'0';
+      sumEls[cat].className='acc-sum'+(t>0?' has':'');
+    });
+  }
+
+  Object.keys(dtData).forEach(function(cat){
+    var item=document.createElement('div');item.className='acc-item';
+    if(sumFlat(dtData[cat])>0)item.classList.add('open');
+    var head=document.createElement('button');head.type='button';head.className='acc-head';
+    var title=document.createElement('span');title.textContent=cat;
+    var right=document.createElement('span');right.className='acc-right';
+    var sumEl=document.createElement('span');sumEl.className='acc-sum';sumEls[cat]=sumEl;
+    var chev=document.createElement('span');chev.className='acc-chev';chev.textContent='›';
+    right.appendChild(sumEl);right.appendChild(chev);
+    head.appendChild(title);head.appendChild(right);
+    head.onclick=function(){item.classList.toggle('open')};
+    var body=document.createElement('div');body.className='acc-body';
+    Object.keys(dtData[cat]).forEach(function(name){body.appendChild(makeCounter(dtData,cat,name,{quick:[5,10],onChange:refreshDt}))});
+    item.appendChild(head);item.appendChild(body);
+    div.appendChild(item);
+  });
+
+  var lbl=document.createElement('div');lbl.className='field-label';lbl.style.marginTop='12px';lbl.textContent='รายละเอียด Other (อื่นๆ) / หมายเหตุ Loss Time';div.appendChild(lbl);
+  var ta=document.createElement('textarea');ta.className='num-input';ta.id='dtNoteInput';ta.placeholder='ระบุรายละเอียดกรณีเลือก Other หรือหมายเหตุเพิ่มเติม...';ta.value=dtNote;div.appendChild(ta);
+  refreshDt();
+}
+
+/* ปุ่มงาน NG (เดี่ยว หรือแยกตามเครื่องจักร) */
+function renderNgButtons(){
+  var wrap=$('ngButtonsWrap');
+  if(!wrap)return;
+  wrap.innerHTML='';
+  var machines=getMachinesForProcess(currentProcess);
+  var targets=(machines&&machines.length)?machines:[null];
+  targets.forEach(function(m,idx){
+    var total=sumFlat(m?ngData[m]:ngData);
+    var btn=document.createElement('button');btn.className='action-btn';
+    if(idx<targets.length-1)btn.style.marginBottom='8px';
+    btn.innerHTML='<span class="left"><span>⚠️</span> งาน NG'+(m?' — '+m:'')+'</span>'+
+      '<span class="badge'+(total>0?' active-rose':'')+'">'+(total>0?(total+' ชิ้น'):'ยังไม่มีข้อมูล')+'</span>';
+    btn.onclick=function(){openNgMachineModal(m)};
+    wrap.appendChild(btn);
+  });
+}
+
+function openNgMachineModal(machine){
+  currentNgMachine=machine;
+  buildNgContent();
+  $('ngOverlay').classList.remove('hidden');
+}
+
+function buildNgContent(){
+  var div=$('ngContent');div.innerHTML='';
+  var bar=document.createElement('div');bar.className='modal-total';
+  bar.innerHTML='<span>รวม NG'+(currentNgMachine?(' — '+currentNgMachine):'')+'</span><span><span class="num" id="ngModalTotal">0</span> ชิ้น</span>';
+  div.appendChild(bar);
+
+  var target=currentNgMachine?ngData[currentNgMachine]:ngData;
+  if(!target){target={};if(currentNgMachine)ngData[currentNgMachine]=target}
+  function refreshNg(){var el=$('ngModalTotal');if(el)el.textContent=formatNum(sumFlat(target))}
+
+  // ช่องเลข Lot 2 ช่อง — เฉพาะกระบวนการ Screening
+  if(isScreeningProcess(currentProcess)){
+    [['เลข Lot 1','ngLotInput',function(){return ngLotNumber},function(v){ngLotNumber=v}],
+     ['เลข Lot 2','ngLotInput2',function(){return ngLotNumber2},function(v){ngLotNumber2=v}]].forEach(function(c){
+      var lbl=document.createElement('div');lbl.className='field-label';lbl.textContent=c[0];div.appendChild(lbl);
+      var inp=document.createElement('input');
+      inp.type='text';inp.className='num-input';inp.id=c[1];inp.placeholder='กรอก'+c[0]+'...';inp.autocomplete='off';
+      inp.style.marginBottom='8px';inp.value=c[2]();
+      inp.oninput=function(){c[3](inp.value)};
+      div.appendChild(inp);
+    });
+  }
+
+  var lbl=document.createElement('div');lbl.className='cat-label';
+  lbl.textContent='ประเภท NG — '+(currentProcess||'')+(currentNgMachine?(' — '+currentNgMachine):'');
+  div.appendChild(lbl);
+  Object.keys(target).forEach(function(name){div.appendChild(makeCounter(target,null,name,{quick:[5],onChange:refreshNg}))});
+
+  var noteLbl=document.createElement('div');noteLbl.className='field-label';noteLbl.style.marginTop='12px';noteLbl.textContent='หมายเหตุ NG';div.appendChild(noteLbl);
+  var ta=document.createElement('textarea');ta.className='num-input';ta.id='ngNoteInput';ta.placeholder='รายละเอียดเพิ่มเติม...';ta.value=ngNote;div.appendChild(ta);
+  refreshNg();
+}
+
+function openModal(type){
+  if(type==='downtime'){buildDtContent();$('dtOverlay').classList.remove('hidden')}
+  else openNgMachineModal(null);
+}
+function closeModal(type){$(type==='downtime'?'dtOverlay':'ngOverlay').classList.add('hidden')}
+
+function saveModal(type){
+  if(type==='downtime'){
+    var i1=$('dtNoteInput');if(i1)dtNote=i1.value;
+    var b=updateDtBadge();
+    b.classList.remove('pop');void b.offsetWidth;b.classList.add('pop');
+  }else{
+    var i2=$('ngNoteInput');if(i2)ngNote=i2.value;
+    renderNgButtons();
+  }
+  closeModal(type);
+  updateLiveSummary();
+}
+
+/* ================== สรุปผลสด / คำเตือน / ยืนยันก่อนบันทึก ==================
+   สูตรเหมือน computeMetrics_ ใน Code.gs | ปรับเกณฑ์เตือนที่สองตัวแปรนี้ */
+var MAX_SHIFT_MINUTES=720,MAX_PRODUCTIVITY_PERCENT=120;
+
+function computeLiveSummary(){
+  var total=Number($('totalPcs').value)||0;
+  var actual=Number($('actualTime').value)||0;
+  var cycle=Number($('cycleTimeField').value)||0;
+  var ng=sumFlat(ngData),loss=sumFlat(dtData),good=total-ng;
+  var ngPct=total>0?(ng/total*100):null;
+  var pph=actual>0?(good/(actual/60)):null;
+  var prod=(cycle>0&&actual>0)?(good/((actual*60)/cycle)*100):null;
+  var w=[];
+  if(partValue&&!(cycle>0))w.push('ไม่พบ Cycle Time ของ Part นี้ใน Master — Productivity จะเป็น 0');
+  if(total>0&&ng>total)w.push('จำนวน NG ('+formatNum(ng)+') มากกว่าจำนวนชิ้นงานทั้งหมด ('+formatNum(total)+')');
+  if(actual>0&&(actual+loss)>MAX_SHIFT_MINUTES)w.push('เวลาทำงานจริง + Losstime รวม '+formatNum(actual+loss)+' นาที เกิน '+MAX_SHIFT_MINUTES+' นาที — เช็คว่ากรอกนาทีถูกต้องหรือไม่');
+  if(prod!==null&&prod>MAX_PRODUCTIVITY_PERCENT)w.push('Productivity '+prod.toFixed(1)+'% สูงผิดปกติ (เกิน '+MAX_PRODUCTIVITY_PERCENT+'%) — เช็คจำนวนชิ้นงาน เวลา หรือ Cycle Time');
+  return {total:total,actual:actual,cycle:cycle,ng:ng,loss:loss,good:good,ngPct:ngPct,pph:pph,prod:prod,warnings:w};
+}
+
+function fillWarnList(el,warnings){
+  el.innerHTML='';
+  warnings.forEach(function(w){var d=document.createElement('div');d.className='warn-item';d.textContent='⚠️ '+w;el.appendChild(d)});
+}
+
+function updateLiveSummary(){
+  var elGood=$('sumGood');
+  if(!elGood)return;
+  var s=computeLiveSummary();
+  elGood.innerHTML=s.total>0?(formatNum(s.good)+' <small>ชิ้น</small>'):'—';
+  elGood.className='sum-value'+((s.total>0&&s.good<0)?' bad':'');
+  $('sumNg').innerHTML=s.ngPct!==null?(s.ngPct.toFixed(2)+'% <small>('+formatNum(s.ng)+' ชิ้น)</small>'):'—';
+  $('sumNg').className='sum-value'+((s.total>0&&s.ng>s.total)?' bad':'');
+  $('sumProd').innerHTML=s.prod!==null?(s.prod.toFixed(1)+'%'):'—';
+  $('sumProd').className='sum-value'+((s.prod!==null&&s.prod>MAX_PRODUCTIVITY_PERCENT)?' warn':'');
+  $('sumPph').innerHTML=s.pph!==null?formatNum(Math.round(s.pph*10)/10):'—';
+
+  var wl=$('warnList');
+  fillWarnList(wl,s.warnings);
+  wl.style.display=s.warnings.length?'flex':'none';
+
+  var cw=$('cycleWarn');
+  if(partValue&&!(s.cycle>0)){
+    cw.textContent='⚠️ ไม่พบ Cycle Time ของ Part นี้ใน Master — Productivity จะเป็น 0';
+    cw.style.display='block';
+  }else cw.style.display='none';
+}
+
+function openSaveConfirm(){
+  var s=computeLiveSummary(),isEdit=!!editRecordId;
+  $('saveConfirmTitle').textContent=isEdit?'ตรวจสอบก่อนอัปเดต':'ตรวจสอบก่อนบันทึก';
+  $('saveConfirmBtn').textContent=isEdit?'✓ ยืนยันอัปเดต':'✓ ยืนยันบันทึก';
+  var body=$('saveConfirmBody');body.innerHTML='';
+
+  if(s.warnings.length){
+    var wl=document.createElement('div');wl.className='warn-list';wl.style.margin='0 0 12px';
+    fillWarnList(wl,s.warnings);body.appendChild(wl);
+  }
+  [['วันที่',formatDisplayDate($('dateField').value)],
+   ['กะ','Shift '+currentShift+' · '+currentDayNight],
+   ['พนักงาน',Array.from(selectedEmps).join(', ')],
+   ['Part Number',partValue],
+   ['จำนวนชิ้นงานทั้งหมด',formatNum(s.total)+' ชิ้น'],
+   ['NG',formatNum(s.ng)+' ชิ้น'+(s.ngPct!==null?(' ('+s.ngPct.toFixed(2)+'%)'):'')],
+   ['ชิ้นงานดี',formatNum(s.good)+' ชิ้น'],
+   ['เวลาทำงานจริง',formatNum(s.actual)+' นาที'],
+   ['Losstime',formatNum(s.loss)+' นาที'],
+   ['Productivity',s.prod!==null?(s.prod.toFixed(1)+'%'):'— (ไม่มี Cycle Time)'],
+   ['ชิ้น / ชม.',s.pph!==null?formatNum(Math.round(s.pph*10)/10):'—']
+  ].forEach(function(r){
+    var row=document.createElement('div');row.className='confirm-row';
+    row.innerHTML='<span class="k"></span><span class="v"></span>';
+    row.firstChild.textContent=r[0];row.lastChild.textContent=r[1];
+    body.appendChild(row);
+  });
+  $('saveConfirmOverlay').classList.remove('hidden');
+}
+function closeSaveConfirm(){$('saveConfirmOverlay').classList.add('hidden')}
+
+function showToast(msg,isError){
+  var t=$('toast');t.textContent=msg;t.className='toast show'+(isError?' error':'');
+  setTimeout(function(){t.className='toast'},3000);
+}
+
+/* ================== บันทึก ================== */
+function submitForm(confirmed){
+  if(!currentProduct){showToast('⚠️ กรุณาเลือกผลิตภัณฑ์',true);backToMenu();return}
+  if(!currentProcess){showToast('⚠️ กรุณาเลือกกระบวนการ',true);backToList();return}
+  if(!$('dateField').value){showToast('⚠️ กรุณาเลือกวันที่',true);return}
+  if(!selectedEmps.size){showToast('⚠️ กรุณาเลือกชื่อพนักงาน',true);return}
+  if(!partValue){showToast('⚠️ กรุณาเลือก Part Number',true);return}
+
+  var totalPcs=Number($('totalPcs').value),actualTime=Number($('actualTime').value);
+  if(!isFinite(totalPcs)||totalPcs<=0){showToast('⚠️ จำนวนชิ้นงานต้องมากกว่า 0',true);$('totalPcs').focus();return}
+  if(!isFinite(actualTime)||actualTime<=0){showToast('⚠️ เวลาทำงานจริงต้องมากกว่า 0 นาที',true);$('actualTime').focus();return}
+  if(sumFlat(ngData)>totalPcs){showToast('⚠️ จำนวน NG ต้องไม่มากกว่าจำนวนชิ้นงานทั้งหมด',true);return}
+  if(confirmed!==true){openSaveConfirm();return} // แสดงหน้าสรุปให้ตรวจก่อน แล้วบันทึกจริงเมื่อกดยืนยัน
+
+  var isEdit=!!editRecordId,btn=$('submitBtn');
+  var idleLabel=isEdit?'💾 อัปเดตข้อมูล':'💾 บันทึกข้อมูล';
+  btn.disabled=true;
+  btn.innerHTML='<div class="spinner"></div> '+(isEdit?'กำลังอัปเดต...':'กำลังบันทึก...');
+
+  var screening=isScreeningProcess(currentProcess);
+  var payload={
+    product:currentProduct,
+    date:$('dateField').value,
+    shift:'Shift '+currentShift,
+    dayNight:currentDayNight,
+    employees:Array.from(selectedEmps),
+    process:currentProcess,
+    partNumber:partValue,
+    cycleTime:$('cycleTimeField').value,
+    totalPcs:$('totalPcs').value,
+    actualTime:$('actualTime').value,
+    downtime:dtData,
+    downtimeNote:dtNote,
+    ng:ngData,
+    ngNote:ngNote,
+    machineIssue:$('machineIssue').value,
+    lotNumber:screening?String(ngLotNumber||'').trim():'',
+    lotNumber2:screening?String(ngLotNumber2||'').trim():''
+  };
+  if(isEdit)payload.id=editRecordId;
+  else{
+    // clientId = RecordID ที่สร้างจากเครื่อง ส่งซ้ำกี่ครั้งเซิร์ฟเวอร์ก็บันทึกครั้งเดียว
+    if(!currentClientId)currentClientId=newUuid();
+    payload.clientId=currentClientId;
+    payload.clientTimestamp=new Date().toISOString();
+  }
+  payload=JSON.parse(JSON.stringify(payload)); // ตัดการอ้างอิงกับฟอร์ม กันค่าเปลี่ยนระหว่างรอ
+
+  function idle(){btn.disabled=false;btn.innerHTML=idleLabel}
+  function queueIt(){
+    if(enqueueRecord(payload)){
+      showToast('📴 บันทึกในเครื่องแล้ว — จะส่งขึ้นระบบอัตโนมัติเมื่อมีสัญญาณ');
+      updateNetBar();loadProcessTotals();showHistoryPanel();
+    }else showToast('❌ พื้นที่เก็บข้อมูลในเครื่องเต็ม — บันทึกไม่สำเร็จ',true);
+  }
+
+  apiCall(isEdit?'updateRecord':'saveRecord',[payload],isEdit?25000:15000).then(function(result){
+    idle();
+    if(result&&result.success){
+      showToast(isEdit?'✓ อัปเดตสำเร็จ':'✓ บันทึกสำเร็จ'+(result.row?' (แถวที่ '+result.row+')':''));
+      loadProcessTotals();
+      showHistoryPanel();
+    }else if(result&&result.retry&&!isEdit)queueIt();
+    else showToast('❌ '+(result&&result.error?result.error:'ไม่ทราบสาเหตุ'),true);
+  },function(err){
+    idle();
+    if(err.network&&!isEdit)queueIt();
+    else if(err.network)showToast('❌ ออฟไลน์ — แก้ไขรายการเดิมได้เฉพาะตอนมีสัญญาณ',true);
+    else if(!err.auth)showToast('❌ '+err.message,true);
+  });
+}
+
+function resetForm(){
+  currentClientId=newUuid();
+  selectShift('A');selectDayNight(guessDayNight());
+  selectedEmps.clear();renderEmpTags();
+  setPartUI('');
+  ['cycleTimeField','totalPcs','actualTime','machineIssue'].forEach(function(id){$(id).value=''});
+  Object.keys(dtData).forEach(function(c){Object.keys(dtData[c]).forEach(function(k){dtData[c][k]=0})});
+  rebuildNgData(currentProcess);
+  ngNote='';dtNote='';ngLotNumber='';ngLotNumber2='';
+  updateDtBadge();
+  renderNgButtons();
+  updateLiveSummary();
+}
+
+document.addEventListener('click',function(e){
+  if(empDropdownOpen&&!$('empWrap').contains(e.target))setEmpDropdown(false);
+  if(partDropdownOpen&&!$('partWrap').contains(e.target))closePartDropdown();
+});
+
+/* ================== โหมดเต็มจอ (kiosk) ================== */
+var kioskLocked=false;
+function toggleFullscreen(){
+  if(!(document.fullscreenElement||document.webkitFullscreenElement)){
+    kioskLocked=true;
+    requestFullscreenNow();
+  }
+}
+function requestFullscreenNow(){
+  var el=document.documentElement;
+  if(el.requestFullscreen)el.requestFullscreen().catch(function(){});
+  else if(el.webkitRequestFullscreen)el.webkitRequestFullscreen();
+}
+function onFullscreenChange(){
+  if(isInstalledPWA)return;
+  var isFs=document.fullscreenElement||document.webkitFullscreenElement;
+  $('fsBtn').style.display=(!isFs&&!kioskLocked)?'flex':'none';
+  $('kioskOverlay').classList.toggle('show',!isFs&&kioskLocked);
+}
+document.addEventListener('fullscreenchange',onFullscreenChange);
+document.addEventListener('webkitfullscreenchange',onFullscreenChange);
+
+/* ================== เริ่มต้น ================== */
+setDateValue(todayStr());
+renderEmpTags();
+renderProductMenu();
+
+/* ================== PWA เริ่มต้น ================== */
+if(isInstalledPWA)$('fsBtn').style.display='none'; // ติดตั้งเป็นแอปแล้ว เต็มจออยู่แล้ว
+if('serviceWorker' in navigator)window.addEventListener('load',function(){
+  navigator.serviceWorker.register('./sw.js').catch(function(e){console.warn('[SW]',e)});
+});
+if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(function(){}); // ขอไม่ให้เบราว์เซอร์ลบข้อมูลที่ค้างส่ง
+window.addEventListener('online',function(){netDown=false;updateNetBar();syncQueue(false);warmCache()});
+window.addEventListener('offline',updateNetBar);
+setInterval(function(){
+  if(!localStorage.getItem(LS_TOKEN)||syncing)return;
+  if(getQueue().some(function(x){return !x.err})||lsGet(LS_EMPQ,[]).length>0)syncQueue(false);
+  else if(netDown)apiCall('ping',[],10000).then(updateNetBar,function(){});
+},20000);
+$('setupCode').addEventListener('keydown',function(e){if(e.key==='Enter')submitSetup()});
+updateNetBar();
+if(!apiConfigured())showSetup('ยังไม่ได้ตั้งค่า API_URL ใน index.html');
+else if(!localStorage.getItem(LS_TOKEN))showSetup('');
+else setTimeout(afterReady,1500);
+</script>
+</body>
+</html>
