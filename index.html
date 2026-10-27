@@ -676,6 +676,7 @@ var NG_SWP_GR2=['Dent / Hit (กระแทก)','Scratch (ขีดข่ว�
 var NG_SWP_MILL=['Dent ML / Hit (กระแทก)','Scratch ML (ขีดข่วน)','Length Error ML (ความยาว)','Deform ML (ผิดรูป)','Double ML (ผิดรูป)','Setting ML','Other (อื่นๆ)'];
 var NG_SWP_GRIND=['Dent GR / Hit (กระแทก)','Scratch GR (ขีดข่วน)','Burr GR (ครีบ)','Diameter Error GR','Deform (ผิดรูป)','Setting GR','Other (อื่นๆ)'];
 var NG_SWP_SCREEN=['Dent ML / Hit (กระแทก)','Scratch ML (ขีดข่วน)','Length Error ML','Deform ML (ผิดรูป)','Double ML (ผิดรูป)','Dent GR / Hit (กระแทก)','Scractch GR (ขีดข่วน)','Burr GR (ครีบ)','Diameter Error GR','Deform GR (ผิดรูป)','Other (อื่นๆ)'];
+var NG_SWP_CHANGEBOX=NG_SWP_SCREEN.filter(function(t){return t!=='Other (อื่นๆ)'}).concat(['NG in Process','NG Material','NG from Cutting','Other (อื่นๆ)']);
 var NG_VOP_LATHE=['Dent / Hit lathe 1 (กระแทก)','Dent / Hit lathe 2 (กระแทก)','Scratch Lathe 1 (กระแทก)','Scratch Lathe 2 (กระแทก)','Burr Lathe 1 (ครีบ)','Burr Lathe 2 (ครีบ)','Impression Lathe 1 (รอยกดทับ)','Impression Lathe 2 (รอยกดทับ)','Length Error Lathe 1 (ความยาว)','Length Error Lathe 2 (ความยาว)','Diameter Error Lathe 1 (เส้นผ่านศูนย์กลาง)','Diameter Error Lathe 2 (เส้นผ่านศูนย์กลาง)','Deform Lathe 1 (ผิดรูป)','Deform Lathe 2 (ผิดรูป)','Setting Lathe 1','Setting Lathe 2','Rusty Lathe 1 (สนิม)','Rusty Lathe 2 (สนิม)'];
 var NG_DRILL=['Dent / Hit (กระแทก)','Scratch (ขีดข่วน)','Burr (ครีบ)','Impression (รอยกดทับ)','Length Error (ความยาว)','Diameter Error (เส้นผ่านศูนย์กลาง)','Deform (ผิดรูป)','Setting','Rusty (สนิม)','Double Drilling (เจาะซ้ำ)','Other (อื่นๆ)'];
 var NG_DEBURR_VOP=['Dent / Hit (กระแทก)','Scratch (ขีดข่วน)','Burr (ครีบ)','Impression (รอยกดทับ)','Length Error (ความยาว)','Diameter Error (เส้นผ่านศูนย์กลาง)','Deform (ผิดรูป)','Setting','Double Drilling (เจาะซ้ำ)','Other (อื่นๆ)'];
@@ -704,7 +705,7 @@ regMach(['Gr 1,2 11070 11090'],['Lathe 2 11070 11090','Gr 1,2 11070 11090']);
 regMach(['Roll Slit'],['Roll Slit SOP']);
 regMach(['Induction'],['Induction']);
 regMach(['Grinding 1','Grinding 2'],['Grinding SOP (Set 3)','Grinding SOP (Set 4)','Grinding SOP (Set 7)']);
-regMach(['Grinding 1','Grinding 2','Roll M9'],['Grinding SOP (Set 5)']);
+regMach(['Grinding 1','Grinding 2','Roll M9','Milling'],['Grinding SOP (Set 5)']);
 regMach(['Grinding 1','Grinding 2','Roll M8'],['Grinding SOP (Set 6)']);
 regMach(['Screening 1'],['Screening 1 SOP']);
 regMach(['Screening 100'],['Screening 100 SOP','Screening 100 SWP','Screening 100 VOP']);
@@ -765,7 +766,7 @@ regNg(NG_SWP_GR2,'Grind 2',SWP_LATHE_GR);
 regNg(NG_SWP_MILL,'Milling',['Milling Small SWP']);
 regNg(NG_COLD,'Deburring',['Deburring Small SWP']);
 regNg(NG_SWP_GRIND,'Grind',['Grinding Small SWP']);
-regNg(NG_SWP_SCREEN,'Screening 100 SWP (Change Box)',['Screening 100 SWP (Change Box)']);
+regNg(NG_SWP_CHANGEBOX,'Screening 100 SWP (Change Box)',['Screening 100 SWP (Change Box)']);
 regNg(NG_SWP_SCREEN,'Screening 100',['Screening 100 SWP']);
 // VOP
 regNg(NG_VOP_LATHE,'Lathing',VOP_LATHE);
