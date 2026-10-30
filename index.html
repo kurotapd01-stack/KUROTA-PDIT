@@ -83,7 +83,9 @@ textarea.num-input{resize:vertical;min-height:72px}
 .wt-times{display:flex;gap:12px}
 .wt-times>div{flex:1;min-width:0}
 .wt-sublabel{display:block;font-size:16px;color:var(--ink-tertiary);margin-bottom:4px}
-.wt-time-inp{font-size:26px;font-weight:600;min-height:58px}
+.wt-time-sel{display:flex;align-items:center;gap:6px}
+.wt-sel{flex:1;min-width:0;font-size:26px;font-weight:600;min-height:58px;padding:0 6px;text-align:center;text-align-last:center}
+.wt-colon{font-size:26px;font-weight:700;color:var(--ink)}
 .wt-total{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding:10px 14px;background:var(--bg-soft);border:1px solid var(--card-border);border-radius:10px;font-size:18px;color:var(--ink-secondary)}
 .wt-total b{font-size:22px;color:var(--primary-dark)}
 .wt-pd-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-top:18px;margin-bottom:6px;flex-wrap:wrap}
@@ -519,12 +521,20 @@ textarea.num-input{resize:vertical;min-height:72px}
           <div class="field-label">เวลาทำงานจริง</div>
           <div class="wt-times">
             <div>
-              <label class="wt-sublabel" for="wtStart">เวลาเริ่ม</label>
-              <input type="time" step="60" class="num-input wt-time-inp" id="wtStart" value="08:00" oninput="wtOnTime()">
+              <label class="wt-sublabel" for="wtStartH">เวลาเริ่ม (24 ชม.)</label>
+              <div class="wt-time-sel">
+                <select class="num-input wt-sel" id="wtStartH" aria-label="ชั่วโมงเริ่ม" onchange="wtOnTime()"></select>
+                <span class="wt-colon">:</span>
+                <select class="num-input wt-sel" id="wtStartM" aria-label="นาทีเริ่ม" onchange="wtOnTime()"></select>
+              </div>
             </div>
             <div>
-              <label class="wt-sublabel" for="wtEnd">เวลาสิ้นสุด</label>
-              <input type="time" step="60" class="num-input wt-time-inp" id="wtEnd" value="20:00" oninput="wtOnTime()">
+              <label class="wt-sublabel" for="wtEndH">เวลาสิ้นสุด (24 ชม.)</label>
+              <div class="wt-time-sel">
+                <select class="num-input wt-sel" id="wtEndH" aria-label="ชั่วโมงสิ้นสุด" onchange="wtOnTime()"></select>
+                <span class="wt-colon">:</span>
+                <select class="num-input wt-sel" id="wtEndM" aria-label="นาทีสิ้นสุด" onchange="wtOnTime()"></select>
+              </div>
             </div>
           </div>
           <div class="wt-total"><span>เวลาในกะ</span><b id="wtTotal">720 นาที</b></div>
@@ -1288,13 +1298,24 @@ function wtRender(){
   $('actualTime').value=net>0?net:'';
   updateLiveSummary();
 }
-function wtOnTime(){wtStart=$('wtStart').value;wtEnd=$('wtEnd').value;wtSaved=null;wtRender()}
+function wtPad(n){return (n<10?'0':'')+n}
+function wtFillSel(id,count){ // ใช้ select แทน input เวลา เพื่อให้แสดง 24 ชั่วโมงเสมอ ไม่ขึ้นกับการตั้งค่าเครื่อง
+  var el=$(id);if(!el||el.options.length)return;
+  for(var i=0;i<count;i++){var o=document.createElement('option');o.value=wtPad(i);o.textContent=wtPad(i);el.appendChild(o)}
+}
+function wtSetTime(p,v){var a=String(v||'').split(':');$(p+'H').value=a[0]||'';$(p+'M').value=a[1]||''}
+function wtGetTime(p){return $(p+'H').value+':'+$(p+'M').value}
+function wtOnTime(){wtStart=wtGetTime('wtStart');wtEnd=wtGetTime('wtEnd');wtSaved=null;wtRender()}
 function wtToggle(id){wtOn[id]=!wtOn[id];wtSaved=null;wtRender()}
 function wtClear(){wtOn={};wtSaved=null;wtRender()}
 function wtReset(){
   var d=currentDayNight==='Night'?['20:00','08:00']:['08:00','20:00'];
   wtStart=d[0];wtEnd=d[1];wtOn={};wtSaved=null;
-  if($('wtStart')){$('wtStart').value=wtStart;$('wtEnd').value=wtEnd}
+  if($('wtStartH')){
+    ['wtStartH','wtEndH'].forEach(function(id){wtFillSel(id,24)});
+    ['wtStartM','wtEndM'].forEach(function(id){wtFillSel(id,60)});
+    wtSetTime('wtStart',wtStart);wtSetTime('wtEnd',wtEnd);
+  }
   wtRender();
 }
 function wtSetSaved(v){ // ตอนแก้ไขรายการเดิม: โชว์ค่าที่เคยบันทึกไว้ จนกว่าพนักงานจะคำนวณใหม่
@@ -1964,7 +1985,7 @@ function submitForm(confirmed){
 
   var totalPcs=Number($('totalPcs').value),actualTime=Number($('actualTime').value);
   if(!isFinite(totalPcs)||totalPcs<=0){showToast('⚠️ จำนวนชิ้นงานต้องมากกว่า 0',true);$('totalPcs').focus();return}
-  if(!isFinite(actualTime)||actualTime<=0){showToast('⚠️ เวลาทำงานจริงต้องมากกว่า 0 นาที',true);$('wtStart').focus();return}
+  if(!isFinite(actualTime)||actualTime<=0){showToast('⚠️ เวลาทำงานจริงต้องมากกว่า 0 นาที',true);$('wtStartH').focus();return}
   if(sumFlat(ngData)>totalPcs){showToast('⚠️ จำนวน NG ต้องไม่มากกว่าจำนวนชิ้นงานทั้งหมด',true);return}
   if(confirmed!==true){openSaveConfirm();return} // แสดงหน้าสรุปให้ตรวจก่อน แล้วบันทึกจริงเมื่อกดยืนยัน
 
