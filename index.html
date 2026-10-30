@@ -948,14 +948,16 @@ function cacheWrite(key,val){
 }
 function gasCached(name,args,ok,fail,transform){
   var key=LS_CACHE+name+'|'+JSON.stringify(args);
+  // แสดงข้อมูลจากแคชทันที แล้วค่อยดึงข้อมูลล่าสุดจากเซิร์ฟเวอร์
+  // ลดเวลารอหน้าแอป โดยยังคงอัปเดตข้อมูลจริงเมื่อออนไลน์
+  var cached=lsGet(key,null),hasCache=!!(cached&&cached.v!==undefined);
+  if(hasCache)ok(cached.v,true);
   apiCall(name,args).then(function(r){
     cacheWrite(key,transform?transform(r):r);
     ok(r,false);
   },function(e){
-    var c=e.network?lsGet(key,null):null;
-    if(c)ok(c.v,true);
-    else if(fail)fail(e);
-    else console.error('['+name+']',e);
+    if(!hasCache&&fail)fail(e);
+    else if(!hasCache&&!fail)console.error('['+name+']',e);
   });
 }
 function warmCache(){ // โหลดข้อมูลหลักของทุกผลิตภัณฑ์เก็บไว้ ให้ใช้ออฟไลน์ได้แม้ยังไม่เคยเปิดผลิตภัณฑ์นั้น
