@@ -79,6 +79,34 @@ input,textarea,button{min-height:48px}
 .dd-add-row:hover{background:var(--selected-bg)}
 .num-input{width:100%;min-height:50px;padding:12px 14px;border:1px solid var(--input-border);border-radius:8px;font-size:19px;font-family:'Sarabun',sans-serif;color:var(--ink);background:#fff}
 textarea.num-input{resize:vertical;min-height:72px}
+/* ---- เวลาทำงานจริง: เลือกเวลาเริ่ม/สิ้นสุด + ปุ่มลบ Plan Downtime ---- */
+.wt-times{display:flex;gap:12px}
+.wt-times>div{flex:1;min-width:0}
+.wt-sublabel{display:block;font-size:16px;color:var(--ink-tertiary);margin-bottom:4px}
+.wt-time-inp{font-size:26px;font-weight:600;min-height:58px}
+.wt-total{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding:10px 14px;background:var(--bg-soft);border:1px solid var(--card-border);border-radius:10px;font-size:18px;color:var(--ink-secondary)}
+.wt-total b{font-size:22px;color:var(--primary-dark)}
+.wt-pd-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-top:18px;margin-bottom:6px;flex-wrap:wrap}
+.wt-pd-title{font-size:19px;font-weight:600;color:var(--primary-dark)}
+.wt-pd-sub{font-size:15px;color:var(--ink-tertiary)}
+.wt-row{display:flex;align-items:center;gap:12px;padding:8px 0;border-top:1px solid var(--divider)}
+.wt-name{flex:1;min-width:0}
+.wt-lbl{font-size:19px;font-weight:500;color:var(--ink)}
+.wt-sub{font-size:15px;color:var(--ink-tertiary)}
+.wt-min{font-size:19px;font-weight:600;white-space:nowrap;color:var(--ink)}
+.wt-btn{min-width:122px;min-height:54px;padding:0 10px;border-radius:10px;border:2px solid var(--primary);background:#fff;color:var(--primary-text-on-light);font-size:18px;font-weight:600;font-family:'Sarabun',sans-serif;cursor:pointer}
+.wt-btn.on{background:var(--teal-dark);border-color:var(--teal-dark);color:#fff}
+.wt-btn:disabled{background:var(--bg-soft);border-color:var(--card-border);color:var(--ink-tertiary);font-size:15px;font-weight:400;cursor:not-allowed}
+.wt-btn:active:not(:disabled){transform:scale(.95)}
+.wt-clear-row{display:flex;justify-content:flex-end;margin-top:6px}
+.wt-clear{min-height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--input-border);background:#fff;color:var(--ink-secondary);font-size:16px;font-family:'Sarabun',sans-serif;cursor:pointer}
+.wt-result{margin-top:12px;padding:14px 16px;background:var(--primary-light);border:1px solid var(--input-border);border-radius:12px}
+.wt-line{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:18px;color:var(--ink-secondary)}
+.wt-line b{color:var(--ink)}
+.wt-net{margin-top:8px;padding-top:8px;border-top:1px solid #9DBEE0}
+.wt-net span{font-size:20px;font-weight:600;color:var(--primary-dark)}
+.wt-net b{font-size:34px;color:var(--navy-deep)}
+.wt-saved{margin-top:8px;font-size:15px;color:var(--amber-text)}
 .action-btn{width:100%;min-height:52px;padding:13px 16px;border:1px solid var(--input-border);border-radius:10px;background:#fff;color:var(--ink);font-size:18px;font-family:'Sarabun',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:space-between}
 .action-btn:hover{border-color:var(--primary)}
 .action-btn .left{display:flex;align-items:center;gap:8px}
@@ -487,9 +515,29 @@ textarea.num-input{resize:vertical;min-height:72px}
           <div class="field-label">จำนวนชิ้นงานทั้งหมด (ชิ้น)</div>
           <input type="number" class="num-input" id="totalPcs" placeholder="0" min="0" inputmode="numeric" oninput="updateLiveSummary()">
         </div>
-        <div class="field-row">
-          <div class="field-label">เวลาทำงานจริง (นาที)</div>
-          <input type="number" class="num-input" id="actualTime" placeholder="0" min="0" inputmode="numeric" oninput="updateLiveSummary()">
+        <div class="field-row" id="wtBox">
+          <div class="field-label">เวลาทำงานจริง</div>
+          <div class="wt-times">
+            <div>
+              <label class="wt-sublabel" for="wtStart">เวลาเริ่ม</label>
+              <input type="time" step="60" class="num-input wt-time-inp" id="wtStart" value="08:00" oninput="wtOnTime()">
+            </div>
+            <div>
+              <label class="wt-sublabel" for="wtEnd">เวลาสิ้นสุด</label>
+              <input type="time" step="60" class="num-input wt-time-inp" id="wtEnd" value="20:00" oninput="wtOnTime()">
+            </div>
+          </div>
+          <div class="wt-total"><span>เวลาในกะ</span><b id="wtTotal">720 นาที</b></div>
+          <div class="field-hint warn" id="wtHint" style="display:none"></div>
+          <div class="wt-pd-head"><span class="wt-pd-title">Plan Downtime</span><span class="wt-pd-sub">กดปุ่มเพื่อลบเวลาออกจากเวลาทำงาน</span></div>
+          <div id="wtStops"></div>
+          <div class="wt-clear-row"><button type="button" class="wt-clear" onclick="wtClear()">ล้างที่เลือกทั้งหมด</button></div>
+          <div class="wt-result">
+            <div class="wt-line"><span>ลบ Plan Downtime (<span id="wtCount">0</span> รายการ)</span><b id="wtDeduct">− 0 นาที</b></div>
+            <div class="wt-line wt-net"><span>เวลาทำงานจริง</span><b id="wtNet">0 นาที</b></div>
+            <div class="wt-saved" id="wtSavedNote" style="display:none">ค่าที่บันทึกไว้เดิม — แตะเวลาหรือปุ่มลบเพื่อคำนวณใหม่</div>
+          </div>
+          <input type="hidden" id="actualTime">
         </div>
       </div>
 
@@ -796,6 +844,7 @@ function getNgTypesForMachine(process,machine){
 
 /* ================== สถานะแอป ================== */
 var currentProduct=null,currentProcess=null,currentShift='A',currentDayNight='Day';
+var wtStart='08:00',wtEnd='20:00',wtOn={},wtSaved=null,wtDeductN=0; // เวลาทำงานจริง (ดู wtRender)
 var employees=[],selectedEmps=new Set(),empDropdownOpen=false;
 var partValue='',partDropdownOpen=false;
 var cycleTimeMaster={},processTotals={},historyRecords=[];
@@ -1180,6 +1229,76 @@ function selectDayNight(v){
   currentDayNight=v;
   $('dayBtn').classList.toggle('active',v==='Day');
   $('nightBtn').classList.toggle('active',v==='Night');
+  wtReset();
+}
+
+/* ================== เวลาทำงานจริง ==================
+   พนักงานเลือกเวลาเริ่ม/สิ้นสุด แล้วกดลบ Plan Downtime เอง → ได้นาทีทำงานจริงใส่ #actualTime (hidden)
+   แก้เวลาเบรกได้ที่ WT_PLAN: at = เวลาเบรก (null = ไม่กำหนดเวลา กดได้เสมอ), min = นาที */
+var WT_PLAN={
+  Day:[
+    {id:'d1',label:'5ส.',at:null,min:20},
+    {id:'d2',label:'เบรก',at:'10:00',min:10},
+    {id:'d3',label:'พักเที่ยง',at:null,min:60},
+    {id:'d4',label:'เบรก',at:'15:00',min:10},
+    {id:'d5',label:'เบรกช่วงโอที',at:'17:00',min:20}
+  ],
+  Night:[
+    {id:'n1',label:'เบรก',at:'22:00',min:10},
+    {id:'n2',label:'พักเที่ยง',at:null,min:60},
+    {id:'n3',label:'เบรก',at:'03:00',min:10},
+    {id:'n4',label:'เบรกช่วงโอที',at:'05:00',min:20}
+  ]
+};
+function wtToMin(v){var m=/^(\d{1,2}):(\d{2})$/.exec(v||'');return m?(+m[1])*60+(+m[2]):null}
+function wtCompute(){
+  var s=wtToMin(wtStart),e=wtToMin(wtEnd);
+  var total=(s===null||e===null)?0:((e-s+1440)%1440);
+  var plan=WT_PLAN[currentDayNight]||WT_PLAN.Day,deduct=0,count=0,rows=[];
+  plan.forEach(function(p){
+    var avail=total>0;
+    if(avail&&p.at)avail=((wtToMin(p.at)-s+1440)%1440)<total; // เบรกต้องอยู่ในช่วงเวลาที่เลือก
+    var picked=!!wtOn[p.id]&&avail;
+    if(picked){deduct+=p.min;count++}
+    rows.push({p:p,avail:avail,picked:picked});
+  });
+  return {total:total,deduct:deduct,count:count,net:Math.max(total-deduct,0),rows:rows};
+}
+function wtRender(){
+  if(!$('wtStops'))return;
+  var c=wtCompute(),html='';
+  c.rows.forEach(function(r){
+    var btn=!r.avail?'<button type="button" class="wt-btn" disabled>นอกช่วงเวลา</button>'
+      :r.picked?'<button type="button" class="wt-btn on" aria-pressed="true" onclick="wtToggle(\''+r.p.id+'\')">✓ ลบแล้ว</button>'
+      :'<button type="button" class="wt-btn" aria-pressed="false" onclick="wtToggle(\''+r.p.id+'\')">ลบออก</button>';
+    html+='<div class="wt-row"><div class="wt-name"><div class="wt-lbl">'+r.p.label+'</div><div class="wt-sub">'+(r.p.at?('เวลา '+r.p.at+' น.'):'ไม่กำหนดเวลา')+'</div></div><div class="wt-min">'+r.p.min+' นาที</div>'+btn+'</div>';
+  });
+  $('wtStops').innerHTML=html;
+  $('wtTotal').textContent=c.total+' นาที';
+  var hint=$('wtHint');
+  if(c.total===0){hint.textContent='เลือกเวลาเริ่มและเวลาสิ้นสุดให้ครบ';hint.style.display='block'}
+  else if(c.total!==720){hint.textContent='ช่วงเวลาที่เลือกรวม '+c.total+' นาที (เต็มกะ = 720 นาที) รายการพักที่อยู่นอกช่วงเวลาจะถูกปิดไว้';hint.style.display='block'}
+  else hint.style.display='none';
+  var net=(wtSaved!==null)?wtSaved:c.net;
+  wtDeductN=c.count;
+  $('wtCount').textContent=c.count;
+  $('wtDeduct').textContent='− '+c.deduct+' นาที';
+  $('wtNet').textContent=net+' นาที';
+  $('wtSavedNote').style.display=(wtSaved!==null)?'block':'none';
+  $('actualTime').value=net>0?net:'';
+  updateLiveSummary();
+}
+function wtOnTime(){wtStart=$('wtStart').value;wtEnd=$('wtEnd').value;wtSaved=null;wtRender()}
+function wtToggle(id){wtOn[id]=!wtOn[id];wtSaved=null;wtRender()}
+function wtClear(){wtOn={};wtSaved=null;wtRender()}
+function wtReset(){
+  var d=currentDayNight==='Night'?['20:00','08:00']:['08:00','20:00'];
+  wtStart=d[0];wtEnd=d[1];wtOn={};wtSaved=null;
+  if($('wtStart')){$('wtStart').value=wtStart;$('wtEnd').value=wtEnd}
+  wtRender();
+}
+function wtSetSaved(v){ // ตอนแก้ไขรายการเดิม: โชว์ค่าที่เคยบันทึกไว้ จนกว่าพนักงานจะคำนวณใหม่
+  var n=Number(v);wtSaved=(isFinite(n)&&n>0)?n:null;wtRender();
 }
 
 /* ================== โหลดข้อมูลจากชีต ================== */
@@ -1374,7 +1493,7 @@ function populateFormFromRecord(r){
   renderEmpTags();
   setPartUI(r.partNumber);
   $('totalPcs').value=r.totalPcs||'';
-  $('actualTime').value=r.actualTime||'';
+  wtSetSaved(r.actualTime);
   $('machineIssue').value=r.machineIssue||'';
   if(r.cycleTime!==undefined&&r.cycleTime!=='')$('cycleTimeField').value=r.cycleTime;
   else updateCycleTimeField();
@@ -1766,6 +1885,7 @@ function computeLiveSummary(){
   if(partValue&&!(cycle>0))w.push('ไม่พบ Cycle Time ของ Part นี้ใน Master — Productivity จะเป็น 0');
   if(total>0&&ng>total)w.push('จำนวน NG ('+formatNum(ng)+') มากกว่าจำนวนชิ้นงานทั้งหมด ('+formatNum(total)+')');
   if(actual>0&&(actual+loss)>MAX_SHIFT_MINUTES)w.push('เวลาทำงานจริง + Losstime รวม '+formatNum(actual+loss)+' นาที เกิน '+MAX_SHIFT_MINUTES+' นาที — เช็คว่ากรอกนาทีถูกต้องหรือไม่');
+  if(actual>0&&wtSaved===null&&wtDeductN===0)w.push('ยังไม่ได้กดลบ Plan Downtime — เวลาทำงานจริงยังเท่ากับเวลาในกะ');
   if(prod!==null&&prod>MAX_PRODUCTIVITY_PERCENT)w.push('Productivity '+prod.toFixed(1)+'% สูงผิดปกติ (เกิน '+MAX_PRODUCTIVITY_PERCENT+'%) — เช็คจำนวนชิ้นงาน เวลา หรือ Cycle Time');
   return {total:total,actual:actual,cycle:cycle,ng:ng,loss:loss,good:good,ngPct:ngPct,pph:pph,prod:prod,warnings:w};
 }
@@ -1844,7 +1964,7 @@ function submitForm(confirmed){
 
   var totalPcs=Number($('totalPcs').value),actualTime=Number($('actualTime').value);
   if(!isFinite(totalPcs)||totalPcs<=0){showToast('⚠️ จำนวนชิ้นงานต้องมากกว่า 0',true);$('totalPcs').focus();return}
-  if(!isFinite(actualTime)||actualTime<=0){showToast('⚠️ เวลาทำงานจริงต้องมากกว่า 0 นาที',true);$('actualTime').focus();return}
+  if(!isFinite(actualTime)||actualTime<=0){showToast('⚠️ เวลาทำงานจริงต้องมากกว่า 0 นาที',true);$('wtStart').focus();return}
   if(sumFlat(ngData)>totalPcs){showToast('⚠️ จำนวน NG ต้องไม่มากกว่าจำนวนชิ้นงานทั้งหมด',true);return}
   if(confirmed!==true){openSaveConfirm();return} // แสดงหน้าสรุปให้ตรวจก่อน แล้วบันทึกจริงเมื่อกดยืนยัน
 
@@ -1911,7 +2031,7 @@ function resetForm(){
   selectShift('A');selectDayNight(guessDayNight());
   selectedEmps.clear();renderEmpTags();
   setPartUI('');
-  ['cycleTimeField','totalPcs','actualTime','machineIssue'].forEach(function(id){$(id).value=''});
+  ['cycleTimeField','totalPcs','machineIssue'].forEach(function(id){$(id).value=''}); // actualTime ถูกตั้งใหม่โดย wtReset() ใน selectDayNight
   Object.keys(dtData).forEach(function(c){Object.keys(dtData[c]).forEach(function(k){dtData[c][k]=0})});
   rebuildNgData(currentProcess);
   ngNote='';dtNote='';ngLotNumber='';ngLotNumber2='';
