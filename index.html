@@ -278,6 +278,11 @@ textarea.num-input{resize:vertical;min-height:72px}
 .flag-chip.ng{background:var(--rose-bg);color:var(--rose-text)}
 
 /* ---- fullscreen / FAB / kiosk ---- */
+.refresh-btn{position:fixed;top:calc(10px + env(safe-area-inset-top));right:calc(12px + env(safe-area-inset-right));width:46px;height:46px;border-radius:12px;border:1px solid var(--card-border);background:#fff;color:var(--primary);font-size:22px;display:flex;align-items:center;justify-content:center;z-index:95;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.12);transition:transform .12s ease,opacity .15s ease}
+.refresh-btn:active{transform:scale(.95)}
+.refresh-btn:disabled{opacity:.7}
+.refresh-btn.spin span{display:inline-block;animation:spin .8s linear infinite}
+.page-title,.process-header-bar{padding-right:58px}
 .fs-btn{position:fixed;bottom:16px;right:16px;width:48px;height:48px;border-radius:50%;background:var(--primary);color:#fff;border:none;box-shadow:0 3px 10px rgba(0,0,0,.25);font-size:20px;display:flex;align-items:center;justify-content:center;z-index:100;cursor:pointer}
 .fab-add-btn{position:fixed;bottom:76px;right:16px;width:56px;height:56px;border-radius:50%;background:var(--teal);color:#fff;border:none;box-shadow:0 4px 14px rgba(0,0,0,.28);font-size:28px;line-height:1;display:none;align-items:center;justify-content:center;z-index:100;cursor:pointer;transition:transform .12s ease,background-color .15s ease}
 .fab-add-btn.visible{display:flex}
@@ -291,7 +296,7 @@ textarea.num-input{resize:vertical;min-height:72px}
 .kiosk-overlay .relock-btn:active{transform:scale(.97)}
 
 /* ---- PWA / ออฟไลน์ ---- */
-#netBar{display:none;position:sticky;top:.4rem;z-index:90;align-items:center;justify-content:space-between;gap:10px;margin-bottom:.8rem;padding:10px 14px;border-radius:12px;font-size:17px;font-weight:500;line-height:1.4;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+#netBar{margin-right:58px;display:none;position:sticky;top:.4rem;z-index:90;align-items:center;justify-content:space-between;gap:10px;margin-bottom:.8rem;padding:10px 14px;border-radius:12px;font-size:17px;font-weight:500;line-height:1.4;box-shadow:0 2px 8px rgba(0,0,0,.12)}
 #netBar.show{display:flex}
 #netBar.off{background:var(--navy-deep);color:#fff}
 #netBar.pend{background:var(--amber-bg);color:var(--amber-text)}
@@ -622,6 +627,7 @@ textarea.num-input{resize:vertical;min-height:72px}
 </div>
 <button class="fab-add-btn" id="fabAddBtn" onclick="showAddForm()" title="เพิ่มข้อมูลใหม่">＋</button>
 <button class="fs-btn" id="fsBtn" onclick="toggleFullscreen()" title="โหมดเต็มจอ">⛶</button>
+<button class="refresh-btn" id="refreshBtn" type="button" onclick="refreshData()" title="รีเฟรชข้อมูล" aria-label="รีเฟรชข้อมูล"><span>🔄</span></button>
 
 <div class="kiosk-overlay" id="kioskOverlay">
   <div class="icon">🔒</div>
@@ -1015,7 +1021,7 @@ function syncQueue(manual){
   var hasWork=getQueue().some(function(x){return manual||!x.err})||lsGet(LS_EMPQ,[]).length>0;
   if(!hasWork){updateNetBar();return Promise.resolve()}
   syncing=true;updateNetBar();
-  var sent=0,problems=0,ids=null,i=0;
+  var sent=0,problems=0,ids=null,i=0,netFail=false;
 
   function dropEmp(){lsSet(LS_EMPQ,lsGet(LS_EMPQ,[]).slice(1))}
   function stepEmp(){
@@ -1034,7 +1040,7 @@ function syncQueue(manual){
     var id=ids[i++];
     var item=getQueue().find(function(x){return x.id===id});
     if(!item)return stepRec();
-    return apiCall('saveRecord',[item.payload],30000).then(function(res){
+    return apiCall('saveRecord',[item.payload],60000).then(function(res){
       if(res&&res.success){removeFromQueue(id);sent++}
       else if(res&&res.retry)throw mkErr('busy','network');
       else{markQueueErr(id,(res&&res.error)||'ไม่ทราบสาเหตุ');problems++}
@@ -1045,7 +1051,7 @@ function syncQueue(manual){
     });
   }
 
-  return stepEmp().then(stepRec).catch(function(){}).then(function(){
+  return stepEmp().then(stepRec).catch(function(){netFail=true}).then(function(){
     syncing=false;updateNetBar();
     if(sent){
       showToast('✓ ส่งข้อมูลที่ค้างไว้แล้ว '+sent+' รายการ');
@@ -1054,6 +1060,8 @@ function syncQueue(manual){
     }
     if(problems)showToast('⚠️ มี '+problems+' รายการที่เซิร์ฟเวอร์ไม่รับ — ดูข้อความสีแดงในประวัติ',true);
     else if(manual&&!sent)showToast((navigator.onLine===false||netDown)?'ยังไม่มีสัญญาณ — ลองใหม่ภายหลัง':'ไม่มีรายการค้างส่ง',true);
+    // ระหว่างส่งมีรายการใหม่เข้าคิวเพิ่ม: ส่งต่อทันที (ถ้าเน็ตไม่หลุด)
+    if(!netFail&&getQueue().some(function(x){return !x.err}))return syncQueue(false);
   });
 }
 
@@ -1064,7 +1072,7 @@ function updateNetBar(){
   var errN=q.filter(function(x){return x.err}).length,pend=q.length+eq.length;
   var off=navigator.onLine===false||netDown;
   var txt='',cls='',btn=false;
-  if(syncing){txt='⏳ กำลังส่งข้อมูลที่ค้างไว้...';cls='pend'}
+  if(syncing){txt='⏳ กำลังส่งข้อมูลขึ้นระบบ'+(pend?' ('+pend+' รายการ)':'')+' — ทำงานต่อได้เลย';cls='pend'}
   else if(errN){txt='⚠️ มี '+errN+' รายการส่งไม่สำเร็จ'+(pend>errN?' · รอส่ง '+(pend-errN)+' รายการ':'')+' — ดูข้อความสีแดงในประวัติ';cls='bad';btn=true}
   else if(off){txt='📴 ออฟไลน์ — บันทึกใหม่จะเก็บไว้ในเครื่อง'+(pend?' (รอส่ง '+pend+' รายการ)':'');cls='off';btn=pend>0}
   else if(pend){txt='⏳ รอส่ง '+pend+' รายการ';cls='pend';btn=true}
@@ -1102,6 +1110,57 @@ function submitSetup(){
   });
 }
 function afterReady(){warmCache();syncQueue(false)}
+
+/* ---- ปุ่มรีเฟรชข้อมูล (มุมขวาบน) ----
+   ส่งข้อมูลที่ค้างก่อน แล้วโหลดข้อมูลล่าสุดของหน้าที่เปิดอยู่
+   (หน้าเมนู = โหลดข้อมูลหลักของทุกผลิตภัณฑ์ / หน้ากระบวนการ = ข้อมูลของผลิตภัณฑ์นั้น / หน้าประวัติ = รวมประวัติด้วย)
+   ไม่แตะข้อมูลที่กำลังกรอกในฟอร์ม */
+var refreshing=false;
+function refreshData(){
+  if(refreshing||!apiConfigured()||!localStorage.getItem(LS_TOKEN))return;
+  if(navigator.onLine===false){showToast('📴 ออฟไลน์ — รีเฟรชไม่ได้',true);return}
+  var btn=$('refreshBtn'),prod=currentProduct,proc=currentProcess;
+  var inHist=$('entryView').classList.contains('active')&&$('historyPanel').style.display==='block';
+  refreshing=true;btn.disabled=true;btn.classList.add('spin');
+  function job(name,args,apply,xf){
+    return apiCall(name,args,30000).then(function(r){
+      cacheWrite(LS_CACHE+name+'|'+JSON.stringify(args),xf?xf(r):r);
+      if(apply)apply(r);
+    });
+  }
+  function jobsFor(p,live){
+    return [
+      function(){return job('getCycleTimeMap',[p],live?function(r){if(p===currentProduct)cycleTimeMaster=r||{}}:null)},
+      function(){return job('getEmployees',[p],live?function(r){
+        if(p!==currentProduct)return;
+        employees=(r||[]).slice();
+        lsGet(LS_EMPQ,[]).forEach(function(x){if(x.product===p&&employees.indexOf(x.name)===-1)employees.push(x.name)});
+        if(empDropdownOpen)renderEmpItems($('empSearch').value);
+      }:null)},
+      function(){return job('getProcessGrandTotals',[p],live?function(r){
+        if(p!==currentProduct)return;
+        processTotals=r||{};renderProcessList($('processSearch').value);
+      }:null)}
+    ];
+  }
+  syncQueue(false).then(function(){
+    var jobs=[];
+    if(prod){
+      jobs=jobsFor(prod,true);
+      if(inHist)jobs.push(function(){return job('getRecordsByProcess',[prod,proc],function(r){
+        if(prod!==currentProduct||proc!==currentProcess)return;
+        historyRecords=r||[];historyFromCache=false;historyError='';renderProcessHistory();
+      },slimRecords)});
+    }else PRODUCTS.forEach(function(p){jobs=jobs.concat(jobsFor(p.code,false))});
+    return jobs.reduce(function(chain,j){return chain.then(j)},Promise.resolve()); // ทีละงาน ไม่แย่งแบนด์วิดท์ตอนเน็ตช้า
+  }).then(function(){
+    showToast('✓ รีเฟรชข้อมูลแล้ว');
+  },function(e){
+    if(!e.auth)showToast('❌ รีเฟรชไม่สำเร็จ — '+(e.network?'เน็ตช้าหรือหลุด ลองใหม่อีกครั้ง':e.message),true);
+  }).then(function(){
+    refreshing=false;btn.disabled=false;btn.classList.remove('spin');
+  });
+}
 
 /* ---- ปุ่มติดตั้งแอป ---- */
 window.addEventListener('beforeinstallprompt',function(e){
@@ -1431,12 +1490,13 @@ function backToList(){
   $('fabAddBtn').classList.remove('visible');
   switchView($('entryView'),$('listView'),'left');
 }
-function showHistoryPanel(){
+function showHistoryPanel(skipLoad){
   $('formPanel').style.display='none';
   $('historyPanel').style.display='block';
   $('fabAddBtn').classList.add('visible');
   window.scrollTo(0,0);
-  loadProcessHistory();
+  if(skipLoad===true)renderProcessHistory(); // หลังบันทึก: แสดงจากเครื่องทันที ไม่แย่งแบนด์วิดท์กับการส่งข้อมูล
+  else loadProcessHistory();
 }
 function showFormPanel(){
   $('historyPanel').style.display='none';
@@ -2026,25 +2086,33 @@ function submitForm(confirmed){
   payload=JSON.parse(JSON.stringify(payload)); // ตัดการอ้างอิงกับฟอร์ม กันค่าเปลี่ยนระหว่างรอ
 
   function idle(){btn.disabled=false;btn.innerHTML=idleLabel}
-  function queueIt(){
+
+  if(!isEdit){
+    // บันทึกลงเครื่องก่อนเสมอ (ทันที ไม่รอเน็ต) แล้วส่งขึ้นระบบเบื้องหลัง
+    // เน็ตช้า/หลุด ก็ไม่ต้องรอ — ส่งซ้ำปลอดภัยเพราะเซิร์ฟเวอร์กันซ้ำด้วย clientId
+    idle();
     if(enqueueRecord(payload)){
-      showToast('📴 บันทึกในเครื่องแล้ว — จะส่งขึ้นระบบอัตโนมัติเมื่อมีสัญญาณ');
-      updateNetBar();loadProcessTotals();showHistoryPanel();
+      var off=navigator.onLine===false||netDown;
+      showToast(off?'📴 บันทึกในเครื่องแล้ว — จะส่งขึ้นระบบอัตโนมัติเมื่อมีสัญญาณ':'✓ บันทึกแล้ว — กำลังส่งขึ้นระบบเบื้องหลัง');
+      updateNetBar();
+      renderProcessList($('processSearch').value);
+      showHistoryPanel(true);
+      syncQueue(false);
     }else showToast('❌ พื้นที่เก็บข้อมูลในเครื่องเต็ม — บันทึกไม่สำเร็จ',true);
+    return;
   }
 
-  apiCall(isEdit?'updateRecord':'saveRecord',[payload],isEdit?25000:15000).then(function(result){
+  // แก้ไขรายการเดิม: ต้องต่อเน็ตและรอผลจากเซิร์ฟเวอร์ (เผื่อเน็ตช้า ให้เวลา 45 วินาที)
+  apiCall('updateRecord',[payload],45000).then(function(result){
     idle();
     if(result&&result.success){
-      showToast(isEdit?'✓ อัปเดตสำเร็จ':'✓ บันทึกสำเร็จ'+(result.row?' (แถวที่ '+result.row+')':''));
+      showToast('✓ อัปเดตสำเร็จ');
       loadProcessTotals();
       showHistoryPanel();
-    }else if(result&&result.retry&&!isEdit)queueIt();
-    else showToast('❌ '+(result&&result.error?result.error:'ไม่ทราบสาเหตุ'),true);
+    }else showToast('❌ '+(result&&result.error?result.error:'ไม่ทราบสาเหตุ'),true);
   },function(err){
     idle();
-    if(err.network&&!isEdit)queueIt();
-    else if(err.network)showToast('❌ ออฟไลน์ — แก้ไขรายการเดิมได้เฉพาะตอนมีสัญญาณ',true);
+    if(err.network)showToast('❌ เน็ตช้าหรือหลุด — แก้ไขรายการเดิมได้เฉพาะตอนมีสัญญาณ ลองใหม่อีกครั้ง',true);
     else if(!err.auth)showToast('❌ '+err.message,true);
   });
 }
