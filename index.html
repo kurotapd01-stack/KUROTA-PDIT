@@ -724,6 +724,14 @@ var dtData={
   'PD Production':{'แผนก PD เปลี่ยนมีด,ทูล':0,'แผนก PD เปลี่ยนพาส':0,'แผนก PD ออฟเซ็ตเครื่องจักร':0,'ล้างกรอง':0,'ออกโอที นอกแผนผลิต':0,'เติมน้ำมัน,เปลี่ยนน้ำมัน':0,'Other (อื่นๆ)':0}
 };
 
+/* Loss Total = รวมทุกหมวด "ยกเว้น Plan" (Plan ยังบันทึกไว้ แต่ไม่นับรวมใน Loss Total) */
+var LOSS_EXCLUDE=['Plan'];
+function lossTotal(obj){
+  if(!obj)return 0;
+  return Object.keys(obj).reduce(function(t,c){return LOSS_EXCLUDE.indexOf(c)===-1?t+sumFlat(obj[c]):t},0);
+}
+function planTotal(obj){return obj?sumFlat(obj['Plan']):0}
+
 /* ---- รายการประเภท NG (ใช้ร่วมกันหลายกระบวนการ — แก้ที่เดียว มีผลทุกกระบวนการที่ใช้ชุดนั้น) ---- */
 var NG_DEFAULT=['Dent / Hit (กระแทก)','Scratch (ขีดข่วน)','Burr (ครีบ)','Diameter Over Spec (เส้นผ่านศูนย์กลางใหญ่)','Diameter Lower Spec (เส้นผ่านศูนย์กลางเล็ก)','ผิดรูป Grind ไม่หมด','ผิดรูป Grind กินบ่า','ผิดรูป Grind เป็นเหลี่ยม','Setting','Other (อื่นๆ)'];
 var NG_GEN=['Dent / Hit (กระแทก)','Scratch (ขีดข่วน)','Burr (ครีบ)','Impression (รอยกดทับ)','Length Error (ความยาว)','Diameter Error (เส้นผ่านศูนย์กลาง)','Deform (ผิดรูป)','Setting','Rusty (สนิม)','Other (อื่นๆ)'];
@@ -1629,8 +1637,8 @@ function renderProcessHistory(){
 
     recs.forEach(function(r){
       var isP=!!r.pending;
-      var dt=sumFlat(r.downtime),ng=sumFlat(r.ng);
-      var flags=(dt>0?'<span class="flag-chip">⏸ Loss Time '+dt+'</span>':'')+(ng>0?'<span class="flag-chip ng">⚠️ NG '+ng+'</span>':'');
+      var dt=lossTotal(r.downtime),pl=planTotal(r.downtime),ng=sumFlat(r.ng);
+      var flags=(dt>0?'<span class="flag-chip">⏸ Loss Time '+dt+'</span>':'')+(pl>0?'<span class="flag-chip">📋 Plan '+pl+'</span>':'')+(ng>0?'<span class="flag-chip ng">⚠️ NG '+ng+'</span>':'');
       if(isP)flags=(r.err?'<span class="flag-chip ng">⚠️ ส่งไม่สำเร็จ: '+esc(r.err)+'</span>':'<span class="flag-chip pend">⏳ รอส่ง</span>')+flags;
       var icons=isP
         ?'<button class="history-icon-btn delete" title="ลบ" onclick="deleteHistoryRecord(\''+r.id+'\',event)">🗑</button>'
@@ -1841,12 +1849,16 @@ function updateDtBadge(){
 function buildDtContent(){
   var div=$('dtContent');div.innerHTML='';
   var bar=document.createElement('div');bar.className='modal-total';
-  bar.innerHTML='<span>รวม Losstime</span><span><span class="num" id="dtModalTotal">0</span> นาที</span>';
+  bar.innerHTML='<span>รวม Losstime (ไม่รวม Plan)</span><span><span class="num" id="dtModalTotal">0</span> นาที</span>';
   div.appendChild(bar);
+  var planLine=document.createElement('div');
+  planLine.style.cssText='font-size:16px;color:var(--ink-secondary);margin:-4px 2px 10px';
+  div.appendChild(planLine);
 
   var sumEls={};
   function refreshDt(){
-    $('dtModalTotal').textContent=formatNum(sumFlat(dtData));
+    $('dtModalTotal').textContent=formatNum(lossTotal(dtData));
+    planLine.textContent='Plan: '+formatNum(planTotal(dtData))+' นาที (ไม่นับรวมใน Loss Total)';
     Object.keys(sumEls).forEach(function(cat){
       var t=sumFlat(dtData[cat]);
       sumEls[cat].textContent=t>0?(formatNum(t)+' นาที'):'0';
@@ -1960,7 +1972,7 @@ function computeLiveSummary(){
   var total=Number($('totalPcs').value)||0;
   var actual=Number($('actualTime').value)||0;
   var cycle=Number($('cycleTimeField').value)||0;
-  var ng=sumFlat(ngData),loss=sumFlat(dtData),good=total-ng;
+  var ng=sumFlat(ngData),loss=lossTotal(dtData),plan=planTotal(dtData),good=total-ng;
   var ngPct=total>0?(ng/total*100):null;
   var pph=actual>0?(good/(actual/60)):null;
   var prod=(cycle>0&&actual>0)?(good/((actual*60)/cycle)*100):null;
@@ -1970,7 +1982,7 @@ function computeLiveSummary(){
   if(actual>0&&(actual+loss)>MAX_SHIFT_MINUTES)w.push('เวลาทำงานจริง + Losstime รวม '+formatNum(actual+loss)+' นาที เกิน '+MAX_SHIFT_MINUTES+' นาที — เช็คว่ากรอกนาทีถูกต้องหรือไม่');
   if(actual>0&&wtSaved===null&&wtDeductN===0)w.push('ยังไม่ได้กดลบ Plan Downtime — เวลาทำงานจริงยังเท่ากับเวลาในกะ');
   if(prod!==null&&prod>MAX_PRODUCTIVITY_PERCENT)w.push('Productivity '+prod.toFixed(1)+'% สูงผิดปกติ (เกิน '+MAX_PRODUCTIVITY_PERCENT+'%) — เช็คจำนวนชิ้นงาน เวลา หรือ Cycle Time');
-  return {total:total,actual:actual,cycle:cycle,ng:ng,loss:loss,good:good,ngPct:ngPct,pph:pph,prod:prod,warnings:w};
+  return {total:total,actual:actual,cycle:cycle,ng:ng,loss:loss,plan:plan,good:good,ngPct:ngPct,pph:pph,prod:prod,warnings:w};
 }
 
 function fillWarnList(el,warnings){
@@ -2019,7 +2031,8 @@ function openSaveConfirm(){
    ['NG',formatNum(s.ng)+' ชิ้น'+(s.ngPct!==null?(' ('+s.ngPct.toFixed(2)+'%)'):'')],
    ['ชิ้นงานดี',formatNum(s.good)+' ชิ้น'],
    ['เวลาทำงานจริง',formatNum(s.actual)+' นาที'],
-   ['Losstime',formatNum(s.loss)+' นาที'],
+   ['Losstime (ไม่รวม Plan)',formatNum(s.loss)+' นาที'],
+   ['Plan',formatNum(s.plan)+' นาที'],
    ['Productivity',s.prod!==null?(s.prod.toFixed(1)+'%'):'— (ไม่มี Cycle Time)'],
    ['ชิ้น / ชม.',s.pph!==null?formatNum(Math.round(s.pph*10)/10):'—']
   ].forEach(function(r){
