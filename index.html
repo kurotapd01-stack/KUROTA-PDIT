@@ -230,6 +230,11 @@ textarea.num-input{resize:vertical;min-height:72px}
 .sum-value{font-size:24px;font-weight:700;color:var(--ink);margin-top:2px;line-height:1.2;word-break:break-word}
 .sum-value small{font-size:15px;font-weight:500;color:var(--ink-faint)}
 .sum-value.bad{color:var(--rose-text)}.sum-value.warn{color:var(--amber-text)}
+.sum-subhead{font-size:16px;font-weight:600;color:var(--ink-secondary);margin:16px 0 8px}
+.sum-item.oee{background:var(--primary-light);border-color:var(--primary)}
+.sum-item.oee .sum-label{color:var(--primary-text-on-light);font-weight:600}
+.sum-item.oee .sum-value{color:var(--primary-dark)}
+.sum-item.oee .sum-value.warn{color:var(--amber-text)}
 .warn-list{margin-top:12px;display:flex;flex-direction:column;gap:8px}
 .warn-item{background:var(--amber-bg);color:var(--amber-text);border-radius:10px;padding:10px 14px;font-size:17px;line-height:1.45;font-weight:500}
 .field-hint{font-size:16px;margin-top:6px;line-height:1.4}
@@ -580,6 +585,13 @@ textarea.num-input{resize:vertical;min-height:72px}
           <div class="sum-item"><div class="sum-label">NG</div><div class="sum-value" id="sumNg">—</div></div>
           <div class="sum-item"><div class="sum-label">Productivity</div><div class="sum-value" id="sumProd">—</div></div>
           <div class="sum-item"><div class="sum-label">ชิ้น / ชม.</div><div class="sum-value" id="sumPph">—</div></div>
+        </div>
+        <div class="sum-subhead">OEE</div>
+        <div class="sum-grid">
+          <div class="sum-item"><div class="sum-label">A · Availability</div><div class="sum-value" id="sumA">—</div></div>
+          <div class="sum-item"><div class="sum-label">P · Performance</div><div class="sum-value" id="sumP">—</div></div>
+          <div class="sum-item"><div class="sum-label">Q · Quality</div><div class="sum-value" id="sumQ">—</div></div>
+          <div class="sum-item oee"><div class="sum-label">OEE</div><div class="sum-value" id="sumOee">—</div></div>
         </div>
         <div class="warn-list" id="warnList" style="display:none"></div>
       </div>
@@ -1979,13 +1991,20 @@ function computeLiveSummary(){
   var ngPct=total>0?(ng/total*100):null;
   var pph=actual>0?(good/(actual/60)):null;
   var prod=(cycle>0&&actual>0)?(good/((actual*60)/cycle)*100):null;
+  /* OEE: เวลาทำงานจริง = เวลาในกะ − Plan Downtime (Loading time), Operating = เวลาทำงานจริง − Losstime (ไม่รวม Plan)
+     A = Operating/Loading | P = (Cycle Time × ชิ้นทั้งหมด)/Operating | Q = ชิ้นดี/ชิ้นทั้งหมด | OEE = A×P×Q */
+  var operating=actual>0?Math.max(actual-loss,0):0;
+  var avail=actual>0?(operating/actual*100):null;
+  var perf=(cycle>0&&operating>0&&total>0)?(total*cycle/(operating*60)*100):null;
+  var qual=total>0?(Math.max(good,0)/total*100):null;
+  var oee=(avail!==null&&perf!==null&&qual!==null)?(avail*perf*qual/10000):null;
   var w=[];
   if(partValue&&!(cycle>0))w.push('ไม่พบ Cycle Time ของ Part นี้ใน Master — Productivity จะเป็น 0');
   if(total>0&&ng>total)w.push('จำนวน NG ('+formatNum(ng)+') มากกว่าจำนวนชิ้นงานทั้งหมด ('+formatNum(total)+')');
   if(actual>0&&(actual+loss)>MAX_SHIFT_MINUTES)w.push('เวลาทำงานจริง + Losstime รวม '+formatNum(actual+loss)+' นาที เกิน '+MAX_SHIFT_MINUTES+' นาที — เช็คว่ากรอกนาทีถูกต้องหรือไม่');
   if(actual>0&&wtSaved===null&&wtDeductN===0)w.push('ยังไม่ได้กดลบ Plan Downtime — เวลาทำงานจริงยังเท่ากับเวลาในกะ');
   if(prod!==null&&prod>MAX_PRODUCTIVITY_PERCENT)w.push('Productivity '+prod.toFixed(1)+'% สูงผิดปกติ (เกิน '+MAX_PRODUCTIVITY_PERCENT+'%) — เช็คจำนวนชิ้นงาน เวลา หรือ Cycle Time');
-  return {total:total,actual:actual,cycle:cycle,ng:ng,loss:loss,plan:plan,good:good,ngPct:ngPct,pph:pph,prod:prod,warnings:w};
+  return {total:total,actual:actual,cycle:cycle,ng:ng,loss:loss,plan:plan,good:good,ngPct:ngPct,pph:pph,prod:prod,avail:avail,perf:perf,qual:qual,oee:oee,warnings:w};
 }
 
 function fillWarnList(el,warnings){
@@ -2004,6 +2023,13 @@ function updateLiveSummary(){
   $('sumProd').innerHTML=s.prod!==null?(s.prod.toFixed(1)+'%'):'—';
   $('sumProd').className='sum-value'+((s.prod!==null&&s.prod>MAX_PRODUCTIVITY_PERCENT)?' warn':'');
   $('sumPph').innerHTML=s.pph!==null?formatNum(Math.round(s.pph*10)/10):'—';
+  function pct(v){return v!==null?(v.toFixed(1)+'%'):'—'}
+  $('sumA').innerHTML=pct(s.avail);
+  $('sumP').innerHTML=pct(s.perf);
+  $('sumP').className='sum-value'+((s.perf!==null&&s.perf>MAX_PRODUCTIVITY_PERCENT)?' warn':'');
+  $('sumQ').innerHTML=pct(s.qual);
+  $('sumOee').innerHTML=pct(s.oee);
+  $('sumOee').className='sum-value'+((s.oee!==null&&s.oee>MAX_PRODUCTIVITY_PERCENT)?' warn':'');
 
   var wl=$('warnList');
   fillWarnList(wl,s.warnings);
@@ -2037,7 +2063,11 @@ function openSaveConfirm(){
    ['Losstime (ไม่รวม Plan)',formatNum(s.loss)+' นาที'],
    ['Plan',formatNum(s.plan)+' นาที'],
    ['Productivity',s.prod!==null?(s.prod.toFixed(1)+'%'):'— (ไม่มี Cycle Time)'],
-   ['ชิ้น / ชม.',s.pph!==null?formatNum(Math.round(s.pph*10)/10):'—']
+   ['ชิ้น / ชม.',s.pph!==null?formatNum(Math.round(s.pph*10)/10):'—'],
+   ['A · Availability',s.avail!==null?(s.avail.toFixed(1)+'%'):'—'],
+   ['P · Performance',s.perf!==null?(s.perf.toFixed(1)+'%'):'—'],
+   ['Q · Quality',s.qual!==null?(s.qual.toFixed(1)+'%'):'—'],
+   ['OEE',s.oee!==null?(s.oee.toFixed(1)+'%'):'—']
   ].forEach(function(r){
     var row=document.createElement('div');row.className='confirm-row';
     row.innerHTML='<span class="k"></span><span class="v"></span>';
