@@ -269,6 +269,8 @@ textarea.num-input{resize:vertical;min-height:72px}
 .history-entry-emp,.history-entry-shift{font-size:16px;color:var(--ink-tertiary)}
 .history-entry-emp{white-space:nowrap;flex-shrink:0}
 .history-entry-shift{color:var(--ink-faint)}
+.history-entry-meta{display:flex;align-items:center;gap:10px;min-width:0;flex-wrap:wrap}
+.history-entry-part{font-size:16px;color:var(--ink-secondary);font-weight:500;word-break:break-all}
 .history-entry-icons{display:flex;align-items:center;gap:14px;flex-shrink:0}
 .history-icon-btn{background:none;border:none;padding:4px;cursor:pointer;font-size:17px;color:var(--ink-faint);line-height:1}
 .history-icon-btn:hover{color:var(--primary)}
@@ -1649,7 +1651,8 @@ function renderProcessHistory(){
       entry.style.animationDelay=Math.min(delay++*30,300)+'ms';
       entry.innerHTML=
         '<div class="history-entry-row"><span class="history-entry-process">'+esc(r.process)+'</span><span class="history-entry-emp">'+esc((r.employees&&r.employees.length)?r.employees.join(', '):'-')+'</span></div>'+
-        '<div class="history-entry-row"><span class="history-entry-shift">'+(r.shift==='Shift B'?'B':'A')+'</span>'+
+        '<div class="history-entry-row"><span class="history-entry-meta"><span class="history-entry-shift">'+(r.shift==='Shift B'?'B':'A')+'</span>'+
+          (r.partNumber?'<span class="history-entry-part">Part No: '+esc(r.partNumber)+'</span>':'')+'</span>'+
           '<span class="history-entry-icons">'+icons+'</span></div>'+
         (flags?'<div class="history-issue-flags">'+flags+'</div>':'');
       entry.onclick=isP
