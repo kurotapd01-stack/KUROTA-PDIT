@@ -16,11 +16,10 @@
  * record นั้น (เร็ว) ส่วน generateAllBreakdowns() ใช้ซิงค์ใหม่ทั้งหมดเมื่อจำเป็น
  *
  * นิยามการคำนวณ (ต้องตรงกับ computeLiveSummary ใน index.html):
- *   Plan       = หมวด Plan ใน Loss Time (ไม่นับเป็น Loss)
+ *   Plan       = หมวด Plan ใน Loss Time (บันทึกไว้เฉยๆ ไม่นำมาคำนวณ)
  *   Loss       = เฉพาะ 4 หมวด: MT Maintenance, PC Production Control, QC Quality Control, PD Production
  *                (LOSS_COUNT_CATS) → เก็บใน LossTime_Total
- *   Loading    = ActualTime − Plan
- *   Operating  = Loading − Loss
+ *   Operating  = ActualTime − Loss
  *   Productivity% = ชิ้นงานดี / ((Operating*60)/CycleTime) * 100
  *   ข้อมูลเก่าที่บันทึกก่อนเปลี่ยนนิยาม: รัน recalcAllLossTimeTotals() และ recalcAllProductivity() อย่างละ 1 ครั้ง
  */
@@ -39,8 +38,6 @@ var CYCLETIME_SHEET_NAME = 'CycleTime_Master';
 // หมวด Loss Time ที่นับเป็น Loss (ใช้คำนวณ LossTime_Total / A / P / Q / OEE / Productivity)
 // ชื่อต้องตรงกับ key ใน dtData ของ index.html ทุกตัวอักษร
 var LOSS_COUNT_CATS = ['MT Maintenance', 'PC Production Control', 'QC Quality Control', 'PD Production'];
-// หมวด Plan (ไม่นับเป็น Loss แต่หักออกจากเวลาทำงานจริงก่อนคำนวณ)
-var PLAN_CAT = 'Plan';
 
 // RecordID (UUID) ใช้อ้างอิงแถวตอนแก้ไข/ลบ แทนเลขแถวในชีต
 var DATA_HEADERS = [
@@ -181,14 +178,6 @@ function lossTotal_(downtime) {
   return total;
 }
 
-// เวลา Plan = รวมหมวด Plan (หักออกจากเวลาทำงานจริง แต่ไม่นับเป็น Loss)
-function planTotal_(downtime) {
-  var v = (downtime || {})[PLAN_CAT];
-  if (typeof v === 'number') return v;
-  if (typeof v === 'object' && v !== null) return sumValues_(v);
-  return 0;
-}
-
 function normalizeDate_(rawDate) {
   if (Object.prototype.toString.call(rawDate) === '[object Date]') {
     return Utilities.formatDate(rawDate, Session.getScriptTimeZone(), 'yyyy-MM-dd');
@@ -216,9 +205,9 @@ function getCycleTimeMap(product) {
 }
 
 // Productivity% = ชิ้นงานดี / ((Operating*60)/CycleTime) * 100
-// Operating = ActualTime − Plan − Loss(MT/PC/QC/PD)
+// Operating = ActualTime − Loss(MT/PC/QC/PD) (Plan ไม่นำมาคิด)
 function calcProductivity_(goodPieces, actualTime, downtime, cycleTime) {
-  var operating = Math.max((Number(actualTime) || 0) - planTotal_(downtime) - lossTotal_(downtime), 0);
+  var operating = Math.max((Number(actualTime) || 0) - lossTotal_(downtime), 0);
   if (!(cycleTime > 0) || !(operating > 0)) return 0;
   return goodPieces / ((operating * 60) / cycleTime) * 100;
 }
