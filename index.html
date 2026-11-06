@@ -738,11 +738,12 @@ var dtData={
   'PD Production':{'แผนก PD เปลี่ยนมีด,ทูล':0,'แผนก PD เปลี่ยนพาส':0,'แผนก PD ออฟเซ็ตเครื่องจักร':0,'ล้างกรอง':0,'ออกโอที นอกแผนผลิต':0,'เติมน้ำมัน,เปลี่ยนน้ำมัน':0,'Other (อื่นๆ)':0}
 };
 
-/* Loss Total = รวมทุกหมวด "ยกเว้น Plan" (Plan ยังบันทึกไว้ แต่ไม่นับรวมใน Loss Total) */
-var LOSS_EXCLUDE=['Plan'];
+/* Loss ที่ใช้คำนวณ A / P / Q / OEE / Productivity = เฉพาะ 4 หมวดนี้เท่านั้น (Plan บันทึกไว้แต่ไม่นับเป็น Loss)
+   ชื่อต้องตรงกับ key ใน dtData ทุกตัวอักษร */
+var LOSS_COUNT_CATS=['MT Maintenance','PC Production Control','QC Quality Control','PD Production'];
 function lossTotal(obj){
   if(!obj)return 0;
-  return Object.keys(obj).reduce(function(t,c){return LOSS_EXCLUDE.indexOf(c)===-1?t+sumFlat(obj[c]):t},0);
+  return LOSS_COUNT_CATS.reduce(function(t,c){return t+sumFlat(obj[c])},0);
 }
 function planTotal(obj){return obj?sumFlat(obj['Plan']):0}
 
@@ -1980,8 +1981,8 @@ function saveModal(type){
 }
 
 /* ================== สรุปผลสด / คำเตือน / ยืนยันก่อนบันทึก ==================
-   สูตรเหมือน computeMetrics_ ใน Code.gs (ทั้งสองฝั่งหัก Plan ออกจากเวลาฐาน) | ปรับเกณฑ์เตือนที่สองตัวแปรนี้ */
-var MAX_SHIFT_MINUTES=720,MAX_PRODUCTIVITY_PERCENT=120;
+   สูตรเหมือน computeMetrics_ ใน Code.gs | ปรับเกณฑ์เตือนที่สองตัวแปรนี้ */
+var MAX_PRODUCTIVITY_PERCENT=120;
 
 function computeLiveSummary(){
   var total=Number($('totalPcs').value)||0;
@@ -1990,13 +1991,14 @@ function computeLiveSummary(){
   var ng=sumFlat(ngData),loss=lossTotal(dtData),plan=planTotal(dtData),good=total-ng;
   var ngPct=total>0?(ng/total*100):null;
   var pph=actual>0?(good/(actual/60)):null;
-  /* เวลาฐานคำนวณ (Loading time) = เวลาทำงานจริง − Plan (หมวด Plan ใน Loss Time) — Plan ไม่ถูกนับเป็นทั้งเวลาเดินเครื่องและ Loss
-     Productivity = ชิ้นดี / ((Loading×60)/Cycle Time) */
-  var loading=actual>0?Math.max(actual-plan,0):0;
-  var prod=(cycle>0&&loading>0)?(good/((loading*60)/cycle)*100):null;
-  /* OEE: Operating = Loading − Losstime (ไม่รวม Plan)
-     A = Operating/Loading | P = (Cycle Time × ชิ้นทั้งหมด)/Operating | Q = ชิ้นดี/ชิ้นทั้งหมด | OEE = A×P×Q */
-  var operating=loading>0?Math.max(loading-loss,0):0;
+  /* เวลาคำนวณ (แยก Plan ออกจากเวลาทำงานจริง ไม่นับ Plan เป็น Loss)
+     Loading   = เวลาทำงานจริง − Plan
+     Operating = Loading − Loss (เฉพาะ MT / PC / QC / PD)
+     A = Operating/Loading | P = (Cycle Time × ชิ้นทั้งหมด)/Operating | Q = ชิ้นดี/ชิ้นทั้งหมด
+     Productivity = ชิ้นดี ÷ (Operating × 60 ÷ Cycle Time) | OEE = A×P×Q */
+  var loading=Math.max(actual-plan,0);
+  var operating=Math.max(loading-loss,0);
+  var prod=(cycle>0&&operating>0)?(good/((operating*60)/cycle)*100):null;
   var avail=loading>0?(operating/loading*100):null;
   var perf=(cycle>0&&operating>0&&total>0)?(total*cycle/(operating*60)*100):null;
   var qual=total>0?(Math.max(good,0)/total*100):null;
@@ -2004,11 +2006,10 @@ function computeLiveSummary(){
   var w=[];
   if(partValue&&!(cycle>0))w.push('ไม่พบ Cycle Time ของ Part นี้ใน Master — Productivity จะเป็น 0');
   if(total>0&&ng>total)w.push('จำนวน NG ('+formatNum(ng)+') มากกว่าจำนวนชิ้นงานทั้งหมด ('+formatNum(total)+')');
-  if(actual>0&&(actual+loss)>MAX_SHIFT_MINUTES)w.push('เวลาทำงานจริง + Losstime รวม '+formatNum(actual+loss)+' นาที เกิน '+MAX_SHIFT_MINUTES+' นาที — เช็คว่ากรอกนาทีถูกต้องหรือไม่');
-  if(actual>0&&plan>=actual)w.push('Plan ('+formatNum(plan)+' นาที) มากกว่าหรือเท่ากับเวลาทำงานจริง — ไม่เหลือเวลาให้คำนวณ A / P / Productivity');
+  if(actual>0&&(loss+plan)>actual)w.push('Losstime '+formatNum(loss)+' + Plan '+formatNum(plan)+' นาที เกินเวลาทำงานจริง '+formatNum(actual)+' นาที — เช็คว่ากรอกนาทีถูกต้องหรือไม่');
   if(actual>0&&wtSaved===null&&wtDeductN===0)w.push('ยังไม่ได้กดลบ Plan Downtime — เวลาทำงานจริงยังเท่ากับเวลาในกะ');
   if(prod!==null&&prod>MAX_PRODUCTIVITY_PERCENT)w.push('Productivity '+prod.toFixed(1)+'% สูงผิดปกติ (เกิน '+MAX_PRODUCTIVITY_PERCENT+'%) — เช็คจำนวนชิ้นงาน เวลา หรือ Cycle Time');
-  return {total:total,actual:actual,loading:loading,cycle:cycle,ng:ng,loss:loss,plan:plan,good:good,ngPct:ngPct,pph:pph,prod:prod,avail:avail,perf:perf,qual:qual,oee:oee,warnings:w};
+  return {total:total,actual:actual,cycle:cycle,ng:ng,loss:loss,plan:plan,loading:loading,operating:operating,good:good,ngPct:ngPct,pph:pph,prod:prod,avail:avail,perf:perf,qual:qual,oee:oee,warnings:w};
 }
 
 function fillWarnList(el,warnings){
@@ -2064,8 +2065,10 @@ function openSaveConfirm(){
    ['NG',formatNum(s.ng)+' ชิ้น'+(s.ngPct!==null?(' ('+s.ngPct.toFixed(2)+'%)'):'')],
    ['ชิ้นงานดี',formatNum(s.good)+' ชิ้น'],
    ['เวลาทำงานจริง',formatNum(s.actual)+' นาที'],
-   ['Losstime (ไม่รวม Plan)',formatNum(s.loss)+' นาที'],
-   ['Plan (ไม่นับในการคำนวณ)',formatNum(s.plan)+' นาที'],
+   ['Plan',formatNum(s.plan)+' นาที'],
+   ['เวลาโหลด (ทำงานจริง − Plan)',formatNum(s.loading)+' นาที'],
+   ['Losstime (MT / PC / QC / PD)',formatNum(s.loss)+' นาที'],
+   ['เวลาเดินเครื่อง (โหลด − Loss)',formatNum(s.operating)+' นาที'],
    ['Productivity',s.prod!==null?(s.prod.toFixed(1)+'%'):'— (ไม่มี Cycle Time)'],
    ['ชิ้น / ชม.',s.pph!==null?formatNum(Math.round(s.pph*10)/10):'—'],
    ['A · Availability',s.avail!==null?(s.avail.toFixed(1)+'%'):'—'],
