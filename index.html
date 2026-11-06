@@ -883,7 +883,7 @@ function getNgTypesForMachine(process,machine){
 
 /* ================== สถานะแอป ================== */
 var currentProduct=null,currentProcess=null,currentShift='A',currentDayNight='Day';
-var wtStart='08:00',wtEnd='20:00',wtOn={},wtSaved=null,wtDeductN=0; // เวลาทำงานจริง (ดู wtRender)
+var wtStart='08:00',wtEnd='20:00',wtOn={},wtSaved=null,wtDeductN=0,wtLegacy=false; // เวลาทำงานจริง (ดู wtRender)
 var employees=[],selectedEmps=new Set(),empDropdownOpen=false;
 var partValue='',partDropdownOpen=false;
 var cycleTimeMaster={},processTotals={},historyRecords=[];
@@ -1378,7 +1378,9 @@ function wtRender(){
   $('wtCount').textContent=c.count;
   $('wtDeduct').textContent='− '+c.deduct+' นาที';
   $('wtNet').textContent=net+' นาที';
-  $('wtSavedNote').style.display=(wtSaved!==null)?'block':'none';
+  var sn=$('wtSavedNote');
+  sn.textContent=wtLegacy?'รายการเก่า — ไม่ได้เก็บเวลาเริ่ม/สิ้นสุดและรายการที่ลบไว้ (โชว์เฉพาะค่าที่บันทึก) แตะเวลาหรือปุ่มลบเพื่อคำนวณใหม่':'ค่าที่บันทึกไว้เดิม — แตะเวลาหรือปุ่มลบเพื่อคำนวณใหม่';
+  sn.style.display=(wtSaved!==null)?'block':'none';
   $('actualTime').value=net>0?net:'';
   updateLiveSummary();
 }
@@ -1389,18 +1391,33 @@ function wtFillSel(id,count){ // ใช้ select แทน input เวลา �
 }
 function wtSetTime(p,v){var a=String(v||'').split(':');$(p+'H').value=a[0]||'';$(p+'M').value=a[1]||''}
 function wtGetTime(p){return $(p+'H').value+':'+$(p+'M').value}
-function wtOnTime(){wtStart=wtGetTime('wtStart');wtEnd=wtGetTime('wtEnd');wtSaved=null;wtRender()}
-function wtToggle(id){wtOn[id]=!wtOn[id];wtSaved=null;wtRender()}
-function wtClear(){wtOn={};wtSaved=null;wtRender()}
+function wtOnTime(){wtStart=wtGetTime('wtStart');wtEnd=wtGetTime('wtEnd');wtSaved=null;wtLegacy=false;wtRender()}
+function wtToggle(id){wtOn[id]=!wtOn[id];wtSaved=null;wtLegacy=false;wtRender()}
+function wtClear(){wtOn={};wtSaved=null;wtLegacy=false;wtRender()}
 function wtReset(){
   var d=currentDayNight==='Night'?['20:00','08:00']:['08:00','20:00'];
-  wtStart=d[0];wtEnd=d[1];wtOn={};wtSaved=null;
+  wtStart=d[0];wtEnd=d[1];wtOn={};wtSaved=null;wtLegacy=false;
   if($('wtStartH')){
     ['wtStartH','wtEndH'].forEach(function(id){wtFillSel(id,24)});
     ['wtStartM','wtEndM'].forEach(function(id){wtFillSel(id,60)});
     wtSetTime('wtStart',wtStart);wtSetTime('wtEnd',wtEnd);
   }
   wtRender();
+}
+function wtSnapshot(){ // เก็บเวลาเริ่ม/สิ้นสุด + รายการพักที่กดลบ ไปพร้อมกับข้อมูลที่บันทึก เพื่อเปิดดู/แก้ไขย้อนหลังได้
+  var c=wtCompute(),picked=[],items=[];
+  c.rows.forEach(function(r){
+    if(r.picked){picked.push(r.p.id);items.push({id:r.p.id,label:r.p.label,at:r.p.at||'',min:r.p.min})}
+  });
+  return {start:wtStart,end:wtEnd,total:c.total,deduct:c.deduct,picked:picked,items:items};
+}
+function wtRestore(w){ // คืนค่าเวลาเริ่ม/สิ้นสุดและปุ่มลบที่เคยกดไว้ (รายการเก่าที่ไม่มีข้อมูลนี้ = wtLegacy)
+  if(!w||typeof w!=='object'||!w.start||!w.end){wtLegacy=true;return}
+  wtLegacy=false;
+  wtStart=w.start;wtEnd=w.end;
+  wtSetTime('wtStart',wtStart);wtSetTime('wtEnd',wtEnd);
+  wtOn={};
+  (Array.isArray(w.picked)?w.picked:[]).forEach(function(id){wtOn[id]=true});
 }
 function wtSetSaved(v){ // ตอนแก้ไขรายการเดิม: โชว์ค่าที่เคยบันทึกไว้ จนกว่าพนักงานจะคำนวณใหม่
   var n=Number(v);wtSaved=(isFinite(n)&&n>0)?n:null;wtRender();
@@ -1599,6 +1616,7 @@ function populateFormFromRecord(r){
   renderEmpTags();
   setPartUI(r.partNumber);
   $('totalPcs').value=r.totalPcs||'';
+  wtRestore(r.workTime);
   wtSetSaved(r.actualTime);
   $('machineIssue').value=r.machineIssue||'';
   if(r.cycleTime!==undefined&&r.cycleTime!=='')$('cycleTimeField').value=r.cycleTime;
@@ -2120,6 +2138,7 @@ function submitForm(confirmed){
     cycleTime:$('cycleTimeField').value,
     totalPcs:$('totalPcs').value,
     actualTime:$('actualTime').value,
+    workTime:wtSnapshot(),
     downtime:dtData,
     downtimeNote:dtNote,
     ng:ngData,
