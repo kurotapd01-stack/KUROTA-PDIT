@@ -820,12 +820,12 @@ regMach(['Grind'],['Grinding Small SWP']);
 regMach(['Screening 100 SWP (Change Box)'],['Screening 100 SWP (Change Box)']);
 // VOP
 regMach(['Lathing'],['Lathe Auto (B22-01)','Lathe Auto (B23-01)','Lathe Auto (B13-06)','Lathe Auto (B17-16)']);
-regMach(['Drilling'],['Drilling 10290']);
-regMach(['Deburring'],['Deburring 10290']);
-regMach(['Lathe 1','Lathe 2'],['Lathe 1,2 10230']);
-regMach(['Grind 1'],['Grinding 1 VOP']);
-regMach(['Grind 2'],['Grinding 2 VOP']);
-regMach(['Grind 3'],['Grinding 3 VOP']);
+regMach(['Drilling'],['Drilling 10290','Drilling (10290)']);
+regMach(['Deburring'],['Deburring 10290','Deburring (10290)']);
+regMach(['Lathe 1','Lathe 2'],['Lathe 1,2 10230','Lathe 1,2 (10230)']);
+regMach(['Grind 1'],['Grinding 1 VOP','Grinding 1']);
+regMach(['Grind 2'],['Grinding 2 VOP','Grinding 2']);
+regMach(['Grind 3'],['Grinding 3 VOP','Grinding 3']);
 regMach(['Camera'],['Camera']);
 // VBA
 var VBA_OP1=['Lathe OP1 (B23-16)','Lathe OP1 (B23-17)','Lathe OP1 (B15-03)','Lathe OP1 (B10-15)','Lathe OP1 (B13-11)','Lathe OP1 (B15-02)','Lathe OP1 (B12-01)'];
@@ -862,7 +862,7 @@ regNg(NG_DEFAULT,'Gr 2 11070 11090',['Gr 2 11070 11090']);
 regNg(NG_SCREEN_SOP,'Screening 1',['Screening 1 SOP']);
 regNg(NG_SCREEN_SOP,'Screening 100',['Screening 100 SOP']);
 // SWP
-regNg(NG_GEN,'Grinding 1',['Grinding 1 SWP (Set 1)','Grinding 1 SWP (Set 2)']);
+regNg(NG_GEN,'Grind 1',['Grinding 1 SWP (Set 1)','Grinding 1 SWP (Set 2)']);
 regNg(NG_GEN,'Lathe 1',SWP_LATHE_GR);
 regNg(NG_GEN,'Lathe 2',SWP_LATHE_GR);
 regNg(NG_SWP_GR2,'Grind 2',SWP_LATHE_GR);
@@ -873,12 +873,13 @@ regNg(NG_SWP_CHANGEBOX,'Screening 100 SWP (Change Box)',['Screening 100 SWP (Cha
 regNg(NG_SWP_SCREEN,'Screening 100',['Screening 100 SWP']);
 // VOP
 regNg(NG_VOP_LATHE,'Lathing',VOP_LATHE);
-regNg(NG_DRILL,'Drilling',['Drilling 10290']);
-regNg(NG_DEBURR_VOP,'Deburring',['Deburring 10290']);
-regNg(NG_GEN,'Lathe 1,2',['Lathe 1,2 10230']);
-regNg(NG_GEN,'Grind 1',['Grinding 1 VOP']);
-regNg(NG_GEN,'Grind 2',['Grinding 2 VOP']);
-regNg(NG_GEN,'Grind 3',['Grinding 3 VOP']);
+regNg(NG_DRILL,'Drilling',['Drilling 10290','Drilling (10290)']);
+regNg(NG_DEBURR_VOP,'Deburring',['Deburring 10290','Deburring (10290)']);
+regNg(NG_GEN,'Lathe 1',['Lathe 1,2 10230','Lathe 1,2 (10230)']);
+regNg(NG_GEN,'Lathe 2',['Lathe 1,2 10230','Lathe 1,2 (10230)']);
+regNg(NG_GEN,'Grind 1',['Grinding 1 VOP','Grinding 1']);
+regNg(NG_GEN,'Grind 2',['Grinding 2 VOP','Grinding 2']);
+regNg(NG_GEN,'Grind 3',['Grinding 3 VOP','Grinding 3']);
 regNg(NG_GEN,'Camera',['Camera']);
 regNg(NG_VOP_SCREEN,'Screening 100',['Screening 100 VOP']);
 // VBA
@@ -1236,6 +1237,14 @@ function rebuildNgData(process,sourceNg){
       if(src)Object.keys(src).forEach(function(t){if(!obj.hasOwnProperty(t))obj[t]=parseInt(src[t])||0});
       out[m]=obj;
     });
+    // รายการเก่าที่บันทึก NG แบบแบน (ก่อนกระบวนการนี้มีเครื่องจักร): ย้ายไปรวมในเครื่องแรก กันค่า NG หายตอนกดอัปเดต
+    if(sourceNg){
+      var first=out[machines[0]];
+      Object.keys(sourceNg).forEach(function(t){
+        var v=sourceNg[t];
+        if(v!==null&&typeof v!=='object'){first[t]=(first.hasOwnProperty(t)?first[t]:0)+(parseInt(v)||0)}
+      });
+    }
   }else{
     getNgTypesForProcess(process).forEach(function(t){
       var v=sourceNg?sourceNg[t]:undefined;
