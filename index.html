@@ -263,6 +263,13 @@ textarea.num-input{resize:vertical;min-height:72px}
 .history-filter-card{padding:.9rem 1rem}
 .history-date-header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--bg-soft);border-bottom:1px solid var(--divider-strong);border-top:1px solid var(--divider-strong)}
 .history-date-header:first-child{border-top:none}
+.history-date-header{flex-wrap:wrap;row-gap:8px}
+.history-oee{flex:1 1 100%;display:flex;gap:8px;flex-wrap:wrap}
+.oee-chip{font-size:16px;padding:4px 11px;border-radius:9px;background:#fff;border:1px solid var(--divider-strong);color:var(--ink-secondary);white-space:nowrap}
+.oee-chip b{color:var(--ink);font-weight:700}
+.oee-chip.main{background:var(--primary-light);border-color:var(--primary);color:var(--primary-text-on-light);font-weight:600}
+.oee-chip.main b{color:var(--primary-dark)}
+.oee-chip.warn b{color:var(--amber-text)}
 .history-date-label{font-size:17px;font-weight:600;color:var(--ink-secondary)}
 .history-date-badge{background:var(--divider);color:var(--ink-secondary);font-size:16px;padding:3px 10px;border-radius:8px;font-weight:500;white-space:nowrap}
 .history-entry{display:flex;flex-direction:column;gap:4px;min-height:64px;padding:14px 16px;border-bottom:1px solid var(--divider);cursor:pointer}
@@ -1018,7 +1025,7 @@ function pendingRecords(){
     .reverse().map(function(x){
       var p=x.payload;
       return {id:x.id,pending:true,err:x.err||'',date:p.date,shift:p.shift,dayNight:p.dayNight,employees:p.employees,
-        process:p.process,partNumber:p.partNumber,totalPcs:p.totalPcs,downtime:p.downtime,ng:p.ng};
+        process:p.process,partNumber:p.partNumber,totalPcs:p.totalPcs,actualTime:p.actualTime,cycleTime:p.cycleTime,downtime:p.downtime,ng:p.ng};
     });
 }
 function pendingTotals(){
@@ -1651,6 +1658,34 @@ function populateFormFromRecord(r){
 }
 
 /* ================== ประวัติ ================== */
+/* A / P / Q / OEE รายวัน: รวมทุกกะของวันนั้นแบบถ่วงน้ำหนักด้วยเวลา (ไม่ใช่เฉลี่ยเปอร์เซ็นต์ของแต่ละกะ)
+   A = Σ Operating / Σ Loading | P = Σ(ชิ้นรวม × Cycle ÷ 60) / Σ Operating | Q = Σ ชิ้นดี / Σ ชิ้นรวม | OEE = A×P×Q
+   Operating = เวลาทำงานจริง − Loss (MT/PC/QC/PD) เหมือนสูตรในสรุปผลก่อนบันทึก
+   รายการที่ไม่มี Cycle Time ไม่นับใน P (แต่ยังนับใน A และ Q) */
+function dailyOee(recs){
+  var load=0,oper=0,operP=0,ideal=0,total=0,good=0;
+  recs.forEach(function(r){
+    var t=Number(r.totalPcs)||0,a=Number(r.actualTime)||0,c=Number(r.cycleTime)||0;
+    if(!(a>0))return;
+    var op=Math.max(a-lossTotal(r.downtime),0);
+    load+=a;oper+=op;
+    total+=t;good+=Math.max(t-sumFlat(r.ng),0);
+    if(c>0){operP+=op;ideal+=t*c/60}
+  });
+  var A=load>0?oper/load*100:null;
+  var P=operP>0?ideal/operP*100:null;
+  var Q=total>0?good/total*100:null;
+  var O=(A!==null&&P!==null&&Q!==null)?A*P*Q/10000:null;
+  return {a:A,p:P,q:Q,oee:O};
+}
+function oeeChipsHtml(m){
+  function chip(label,v,extra){
+    var warn=(v!==null&&v>MAX_PRODUCTIVITY_PERCENT)?' warn':'';
+    return '<span class="oee-chip'+(extra||'')+warn+'">'+label+' <b>'+(v===null?'—':v.toFixed(1)+'%')+'</b></span>';
+  }
+  return chip('A',m.a)+chip('P',m.p)+chip('Q',m.q)+chip('OEE',m.oee,' main');
+}
+
 function renderProcessHistory(){
   var c=$('historyListContainer');c.innerHTML='';
   function note(text){var n=document.createElement('div');n.className='history-note';n.textContent=text;c.appendChild(n)}
@@ -1681,7 +1716,7 @@ function renderProcessHistory(){
     var dateTotal=recs.reduce(function(s,r){return s+(Number(r.totalPcs)||0)},0);
     var header=document.createElement('div');header.className='history-date-header row-fade-in';
     header.style.animationDelay=Math.min(delay++*30,300)+'ms';
-    header.innerHTML='<span class="history-date-label">'+formatDateHeader(dateKey)+'</span><span class="history-date-badge">'+formatNum(dateTotal)+'</span>';
+    header.innerHTML='<span class="history-date-label">'+formatDateHeader(dateKey)+'</span><span class="history-date-badge">'+formatNum(dateTotal)+'</span><div class="history-oee">'+oeeChipsHtml(dailyOee(recs))+'</div>';
     c.appendChild(header);
 
     recs.forEach(function(r){
