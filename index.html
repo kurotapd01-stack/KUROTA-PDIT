@@ -413,6 +413,17 @@ textarea.num-input{resize:vertical;min-height:72px}
 }
 @media (min-width:1150px){.app{max-width:1260px}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+.chip-row{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 10px}
+.chip-row:empty{display:none}
+.chip-lbl{font-size:15px;color:var(--ink-faint);align-self:center;margin-right:2px}
+.qchip{min-height:44px;padding:0 16px;border-radius:22px;border:1px solid var(--input-border);background:#fff;color:var(--ink-secondary);font-size:17px;font-family:'Sarabun',sans-serif;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:transform .12s ease,background-color .15s ease,border-color .15s ease}
+.qchip:active{transform:scale(.95)}
+.qchip.on{background:var(--primary-light);border-color:var(--primary);color:var(--primary-text-on-light);font-weight:600}
+.wt-clear-row{justify-content:space-between;gap:8px;flex-wrap:wrap}
+.wt-all{min-height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--primary);background:var(--primary-light);color:var(--primary-text-on-light);font-size:16px;font-weight:600;font-family:'Sarabun',sans-serif;cursor:pointer}
+.wt-all:active{transform:scale(.95)}
+@keyframes flashErr{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,0)}30%{box-shadow:0 0 0 4px rgba(220,38,38,.55)}}
+.flash-err{border-color:#DC2626!important;border-radius:10px;animation:flashErr .7s ease 3}
 </style>
 </head>
 <body>
@@ -508,6 +519,7 @@ textarea.num-input{resize:vertical;min-height:72px}
       <div class="card card-employee">
         <div class="section-title">พนักงาน</div>
         <div class="field-label">ชื่อพนักงาน <span style="color:var(--ink-faint);font-weight:400">(เลือกได้หลายคน)</span></div>
+        <div class="chip-row" id="empChips"></div>
         <div class="multi-select-wrap" id="empWrap">
           <div class="multi-tags" id="empTags" onclick="toggleEmpDropdown()">
             <span class="tags-placeholder" id="empPlaceholder">— เลือกพนักงาน —</span>
@@ -524,6 +536,7 @@ textarea.num-input{resize:vertical;min-height:72px}
       <div class="card card-part">
         <div class="section-title">ชิ้นงาน</div>
         <div class="field-label">Part Number</div>
+        <div class="chip-row" id="partChips"></div>
         <div class="combo-wrap" id="partWrap">
           <input type="text" class="combo-input" id="partInput" placeholder="พิมพ์เพื่อค้นหา Part Number..." autocomplete="off" oninput="onPartInput()" onclick="openPartDropdown()">
           <span class="combo-clear" onclick="clearPart(event)">×</span>
@@ -566,7 +579,7 @@ textarea.num-input{resize:vertical;min-height:72px}
           <div class="field-hint warn" id="wtHint" style="display:none"></div>
           <div class="wt-pd-head"><span class="wt-pd-title">Plan Downtime</span><span class="wt-pd-sub">กดปุ่มเพื่อลบเวลาออกจากเวลาทำงาน</span></div>
           <div id="wtStops"></div>
-          <div class="wt-clear-row"><button type="button" class="wt-clear" onclick="wtClear()">ล้างที่เลือกทั้งหมด</button></div>
+          <div class="wt-clear-row"><button type="button" class="wt-all" onclick="wtAll()">✓ ลบเบรกทั้งหมดตามกะ</button><button type="button" class="wt-clear" onclick="wtClear()">ล้างที่เลือกทั้งหมด</button></div>
           <div class="wt-result">
             <div class="wt-line"><span>ลบ Plan Downtime (<span id="wtCount">0</span> รายการ)</span><b id="wtDeduct">− 0 นาที</b></div>
             <div class="wt-line wt-net"><span>เวลาทำงานจริง</span><b id="wtNet">0 นาที</b></div>
@@ -908,7 +921,7 @@ function $(id){return document.getElementById(id)}
 
 /* ================== PWA: เชื่อมต่อ API / แคช / คิวออฟไลน์ ================== */
 var API_URL='https://script.google.com/macros/s/AKfycbx7QTQ1nbmRl35Ms3Ld2T3KSkLlTZePcVJUqncttrGLzQOGflwYbELvbujQtw4VBNyWuw/exec'; // ← ใส่ Web App URL (ลงท้าย /exec) ของ Apps Script ที่ Deploy ไว้
-var LS_TOKEN='pl_token',LS_QUEUE='pl_queue',LS_EMPQ='pl_empq',LS_CACHE='pl_cache|';
+var LS_DRAFT='pl_draft',LS_TOKEN='pl_token',LS_QUEUE='pl_queue',LS_EMPQ='pl_empq',LS_CACHE='pl_cache|';
 var netDown=false,syncing=false,warming=false,currentClientId='',deferredInstall=null;
 var historyFromCache=false,historyError='';
 var isInstalledPWA=(window.matchMedia&&(matchMedia('(display-mode: fullscreen)').matches||matchMedia('(display-mode: standalone)').matches))||navigator.standalone===true;
@@ -1032,7 +1045,7 @@ function pendingRecords(){
     .reverse().map(function(x){
       var p=x.payload;
       return {id:x.id,pending:true,err:x.err||'',date:p.date,shift:p.shift,dayNight:p.dayNight,employees:p.employees,
-        process:p.process,partNumber:p.partNumber,totalPcs:p.totalPcs,actualTime:p.actualTime,cycleTime:p.cycleTime,downtime:p.downtime,ng:p.ng};
+        process:p.process,partNumber:p.partNumber,totalPcs:p.totalPcs,actualTime:p.actualTime,cycleTime:p.cycleTime,downtime:p.downtime,ng:p.ng,workTime:p.workTime};
     });
 }
 function pendingTotals(){
@@ -1415,6 +1428,11 @@ function wtSetTime(p,v){var a=String(v||'').split(':');$(p+'H').value=a[0]||'';$
 function wtGetTime(p){return $(p+'H').value+':'+$(p+'M').value}
 function wtOnTime(){wtStart=wtGetTime('wtStart');wtEnd=wtGetTime('wtEnd');wtSaved=null;wtLegacy=false;wtRender()}
 function wtToggle(id){wtOn[id]=!wtOn[id];wtSaved=null;wtLegacy=false;wtRender()}
+function wtAll(){ // ลบเบรกทุกรายการที่อยู่ในช่วงเวลาที่เลือก (ข้อ 1)
+  var c=wtCompute();wtOn={};
+  c.rows.forEach(function(r){if(r.avail)wtOn[r.p.id]=true});
+  wtSaved=null;wtLegacy=false;wtRender();
+}
 function wtClear(){wtOn={};wtSaved=null;wtLegacy=false;wtRender()}
 function wtReset(){
   var d=currentDayNight==='Night'?['20:00','08:00']:['08:00','20:00'];
@@ -1599,15 +1617,86 @@ function setPartUI(v){
   partValue=v||'';
   $('partInput').value=partValue;
   $('partWrap').classList.toggle('has-value',!!partValue);
+  renderQuickChips();
+}
+/* ปุ่มลัด Part / ทีมพนักงาน จากรายการล่าสุดของกระบวนการนี้ (ข้อ 2) */
+function renderQuickChips(){
+  var pc=$('partChips'),ec=$('empChips');
+  if(!pc||!ec)return;
+  var hist=allHistory(),parts=[],teams=[],seenP={},seenT={};
+  hist.forEach(function(r){
+    if(r.partNumber&&!seenP[r.partNumber]){seenP[r.partNumber]=1;parts.push(r.partNumber)}
+    var emps=(r.employees||[]).filter(Boolean);
+    var key=emps.slice().sort().join('|');
+    if(emps.length&&!seenT[key]){seenT[key]=1;teams.push(emps)}
+  });
+  parts=parts.slice(0,4);teams=teams.slice(0,3);
+  pc.innerHTML='';ec.innerHTML='';
+  function chip(host,txt,on,fn){var b=document.createElement('button');b.type='button';b.className='qchip'+(on?' on':'');b.textContent=txt;b.onclick=function(e){e.stopPropagation();fn()};host.appendChild(b)}
+  function lbl(host,t){var s=document.createElement('span');s.className='chip-lbl';s.textContent=t;host.appendChild(s)}
+  if(parts.length){lbl(pc,'ใช้ล่าสุด:');parts.forEach(function(n){chip(pc,n,partValue===n,function(){selectPart(n)})})}
+  if(teams.length){
+    lbl(ec,'ทีมล่าสุด:');
+    teams.forEach(function(t){
+      var on=t.length===selectedEmps.size&&t.every(function(n){return selectedEmps.has(n)});
+      chip(ec,t.join(' · '),on,function(){selectedEmps=new Set(t);renderEmpTags();renderEmpItems('')});
+    });
+  }
+}
+function focusTotalPcs(){ // หลังเลือก Part ให้ไปช่องจำนวนชิ้นต่อ (ข้อ 3)
+  var el=$('totalPcs');if(!el||el.value)return;
+  setTimeout(function(){el.focus();try{el.scrollIntoView({behavior:'smooth',block:'center'})}catch(e){}},80);
 }
 function carryOverFrom(rec){
+  if(rec.workTime&&rec.workTime.start&&rec.dayNight===currentDayNight){wtRestore(rec.workTime);wtRender()} // เติมเวลาเริ่ม/สิ้นสุด + เบรกที่ลบไว้
   selectShift(rec.shift==='Shift B'?'B':'A');
   selectedEmps=new Set(rec.employees||[]);
   renderEmpTags();
   setPartUI(rec.partNumber);
   updateCycleTimeField();
 }
+/* ================== ร่างอัตโนมัติ (ข้อ 4) ==================
+   เก็บฟอร์มที่กรอกค้างไว้ต่อ ผลิตภัณฑ์+กระบวนการ ในเครื่อง กู้คืนอัตโนมัติเมื่อกด ＋ ใหม่ ลบเมื่อบันทึกสำเร็จ */
+var draftRestored=false,draftTimer=null;
+function draftKey(){return currentProduct+'||'+currentProcess}
+function draftMeaningful(){return !!($('totalPcs').value||sumFlat(dtData)>0||sumFlat(ngData)>0||$('machineIssue').value||dtNote||ngNote)}
+function clearDraft(){var m=lsGet(LS_DRAFT,{});if(m[draftKey()]){delete m[draftKey()];lsSet(LS_DRAFT,m)}}
+function saveDraft(){
+  if(!currentProduct||!currentProcess||editRecordId||$('formPanel').style.display==='none')return;
+  if(!draftMeaningful()){clearDraft();return}
+  var m=lsGet(LS_DRAFT,{}),w=wtSnapshot();
+  m[draftKey()]={ts:Date.now(),clientId:currentClientId,date:$('dateField').value,shift:currentShift,dayNight:currentDayNight,
+    emps:Array.from(selectedEmps),part:partValue,totalPcs:$('totalPcs').value,machineIssue:$('machineIssue').value,
+    wt:{start:w.start,end:w.end,picked:w.picked},dt:dtData,ng:ngData,ngNote:ngNote,dtNote:dtNote,lot1:ngLotNumber,lot2:ngLotNumber2};
+  lsSet(LS_DRAFT,m);
+}
+function scheduleDraft(){if(draftTimer)clearTimeout(draftTimer);draftTimer=setTimeout(saveDraft,700)}
+['input','change','click'].forEach(function(ev){document.addEventListener(ev,scheduleDraft,true)});
+document.addEventListener('visibilitychange',function(){if(document.hidden)saveDraft()});
+function restoreDraft(){
+  var d=lsGet(LS_DRAFT,{})[draftKey()];
+  if(!d||!d.ts||Date.now()-d.ts>36*3600*1000)return false;
+  if(d.date)setDateValue(d.date);
+  selectShift(d.shift==='B'?'B':'A');
+  selectDayNight(d.dayNight==='Night'?'Night':'Day');
+  selectedEmps=new Set(d.emps||[]);renderEmpTags();
+  setPartUI(d.part);updateCycleTimeField();
+  $('totalPcs').value=d.totalPcs||'';
+  $('machineIssue').value=d.machineIssue||'';
+  if(d.wt)wtRestore(d.wt);wtRender();
+  Object.keys(dtData).forEach(function(c){Object.keys(dtData[c]).forEach(function(k){dtData[c][k]=(d.dt&&d.dt[c]&&parseInt(d.dt[c][k]))||0})});
+  rebuildNgData(currentProcess,d.ng);
+  ngNote=d.ngNote||'';dtNote=d.dtNote||'';ngLotNumber=d.lot1||'';ngLotNumber2=d.lot2||'';
+  if(d.clientId)currentClientId=d.clientId;
+  updateDtBadge();renderNgButtons();updateLiveSummary();
+  draftRestored=true;
+  showPrefillBanner('กู้คืนร่างที่กรอกค้างไว้เมื่อ '+new Date(d.ts).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})+' น. — ตรวจสอบก่อนบันทึก');
+  return true;
+}
 function clearPrefill(){
+  if(draftRestored){ // ปุ่มบนแบนเนอร์ร่าง = ทิ้งร่าง เริ่มฟอร์มใหม่ทั้งหมด
+    draftRestored=false;clearDraft();resetForm();setDateValue(todayStr());hidePrefillBanner();return;
+  }
   selectShift('A');selectedEmps.clear();renderEmpTags();
   setPartUI('');
   $('cycleTimeField').value='';
@@ -1615,10 +1704,15 @@ function clearPrefill(){
 }
 
 function showAddForm(src){
-  editRecordId=null;
+  editRecordId=null;draftRestored=false;
   resetForm();
   $('editBanner').style.display='none';
   hidePrefillBanner();
+  if(!(src&&src.id)&&restoreDraft()){
+    $('submitBtn').innerHTML='💾 บันทึกข้อมูล';
+    showFormPanel();
+    return;
+  }
   if(src&&src.id){
     setDateValue(src.date||todayStr());
     selectDayNight(src.dayNight==='Night'?'Night':'Day');
@@ -1638,7 +1732,7 @@ function showAddForm(src){
 }
 
 function showEditForm(record){
-  editRecordId=record.id;
+  editRecordId=record.id;draftRestored=false;
   populateFormFromRecord(record);
   hidePrefillBanner();
   $('editBanner').style.display='block';
@@ -1800,7 +1894,7 @@ function renderPartItems(filter){
     c.appendChild(div);
   });
 }
-function selectPart(name){setPartUI(name);closePartDropdown();updateCycleTimeField()}
+function selectPart(name){setPartUI(name);closePartDropdown();updateCycleTimeField();focusTotalPcs()}
 function clearPart(e){
   if(e)e.stopPropagation();
   setPartUI('');
@@ -1833,6 +1927,7 @@ function renderEmpTags(){
   var c=$('empTags'),ph=$('empPlaceholder');
   c.querySelectorAll('.tag').forEach(function(t){t.remove()});
   ph.style.display=selectedEmps.size?'none':'';
+  renderQuickChips();
   Array.from(selectedEmps).forEach(function(name){
     var tag=document.createElement('span');tag.className='tag';
     tag.innerHTML=name+' <span class="tag-x" onclick="removeEmp(\''+name+'\',event)">×</span>';
@@ -1978,7 +2073,7 @@ function buildDtContent(){
     head.appendChild(title);head.appendChild(right);
     head.onclick=function(){item.classList.toggle('open')};
     var body=document.createElement('div');body.className='acc-body';
-    Object.keys(dtData[cat]).forEach(function(name){body.appendChild(makeCounter(dtData,cat,name,{quick:[5,10],onChange:refreshDt}))});
+    Object.keys(dtData[cat]).forEach(function(name){body.appendChild(makeCounter(dtData,cat,name,{quick:[5,10,30,60],onChange:refreshDt}))});
     item.appendChild(head);item.appendChild(body);
     div.appendChild(item);
   });
@@ -2174,17 +2269,24 @@ function showToast(msg,isError){
 }
 
 /* ================== บันทึก ================== */
+function flagField(id,msg){ // เลื่อนไปช่องที่ขาด + กะพริบขอบแดง (ข้อ 3)
+  showToast(msg,true);
+  var el=$(id);if(!el)return;
+  try{el.scrollIntoView({behavior:'smooth',block:'center'})}catch(e){}
+  el.classList.remove('flash-err');void el.offsetWidth;el.classList.add('flash-err');
+  setTimeout(function(){el.classList.remove('flash-err')},2300);
+}
 function submitForm(confirmed){
   if(!currentProduct){showToast('⚠️ กรุณาเลือกผลิตภัณฑ์',true);backToMenu();return}
   if(!currentProcess){showToast('⚠️ กรุณาเลือกกระบวนการ',true);backToList();return}
-  if(!$('dateField').value){showToast('⚠️ กรุณาเลือกวันที่',true);return}
-  if(!selectedEmps.size){showToast('⚠️ กรุณาเลือกชื่อพนักงาน',true);return}
-  if(!partValue){showToast('⚠️ กรุณาเลือก Part Number',true);return}
+  if(!$('dateField').value){flagField('dateDisplay','⚠️ กรุณาเลือกวันที่');return}
+  if(!selectedEmps.size){flagField('empTags','⚠️ กรุณาเลือกชื่อพนักงาน');return}
+  if(!partValue){flagField('partWrap','⚠️ กรุณาเลือก Part Number');return}
 
   var totalPcs=Number($('totalPcs').value),actualTime=Number($('actualTime').value);
-  if(!isFinite(totalPcs)||totalPcs<=0){showToast('⚠️ จำนวนชิ้นงานต้องมากกว่า 0',true);$('totalPcs').focus();return}
-  if(!isFinite(actualTime)||actualTime<=0){showToast('⚠️ เวลาทำงานจริงต้องมากกว่า 0 นาที',true);$('wtStartH').focus();return}
-  if(sumFlat(ngData)>totalPcs){showToast('⚠️ จำนวน NG ต้องไม่มากกว่าจำนวนชิ้นงานทั้งหมด',true);return}
+  if(!isFinite(totalPcs)||totalPcs<=0){flagField('totalPcs','⚠️ จำนวนชิ้นงานต้องมากกว่า 0');$('totalPcs').focus();return}
+  if(!isFinite(actualTime)||actualTime<=0){flagField('wtBox','⚠️ เวลาทำงานจริงต้องมากกว่า 0 นาที');return}
+  if(sumFlat(ngData)>totalPcs){flagField('issuesCard','⚠️ จำนวน NG ต้องไม่มากกว่าจำนวนชิ้นงานทั้งหมด');return}
   if(confirmed!==true){openSaveConfirm();return} // แสดงหน้าสรุปให้ตรวจก่อน แล้วบันทึกจริงเมื่อกดยืนยัน
 
   var isEdit=!!editRecordId,btn=$('submitBtn');
@@ -2229,6 +2331,7 @@ function submitForm(confirmed){
     // เน็ตช้า/หลุด ก็ไม่ต้องรอ — ส่งซ้ำปลอดภัยเพราะเซิร์ฟเวอร์กันซ้ำด้วย clientId
     idle();
     if(enqueueRecord(payload)){
+      draftRestored=false;clearDraft();
       var off=navigator.onLine===false||netDown;
       showToast(off?'📴 บันทึกในเครื่องแล้ว — จะส่งขึ้นระบบอัตโนมัติเมื่อมีสัญญาณ':'✓ บันทึกแล้ว — กำลังส่งขึ้นระบบเบื้องหลัง');
       updateNetBar();
