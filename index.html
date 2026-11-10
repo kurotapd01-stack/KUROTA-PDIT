@@ -163,7 +163,7 @@ textarea.num-input{resize:vertical;min-height:72px}
 .search-box{position:relative;margin-bottom:12px}
 .search-box input{width:100%;min-height:50px;padding:12px 16px 12px 44px;border:1px solid var(--input-border);border-radius:10px;font-size:16px;font-family:'Sarabun',sans-serif;background:#fff}
 .search-box .icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--ink-faint);font-size:16px;pointer-events:none}
-.process-list,.history-list{background:#fff;border:1px solid var(--card-border);border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.process-list,.history-list{background:#fff;border:1px solid var(--card-border);border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04);margin-bottom:120px}
 .history-list{margin-top:1rem}
 .process-row{display:flex;align-items:center;justify-content:space-between;min-height:60px;padding:16px;border-bottom:1px solid var(--divider);cursor:pointer;gap:10px}
 .process-row:last-child{border-bottom:none}
@@ -1445,7 +1445,7 @@ function loadProcessTotals(){
 function loadProcessHistory(){
   var c=$('historyListContainer'),prod=currentProduct,proc=currentProcess;
   historyError='';historyFromCache=false;
-  if(!historyRecords.length&&!pendingRecords().length)c.innerHTML='<div class="empty-state">Downloading...</div>';
+  if(!historyRecords.length&&!pendingRecords().length)c.innerHTML='<div class="empty-state"><div class="spinner" style="margin:0 auto 12px;width:32px;height:32px;border-width:3px;border-color:rgba(27,111,184,.25);border-top-color:var(--primary)"></div>กำลังโหลดประวัติ... (ครั้งแรกอาจใช้เวลาสักครู่)<br>กดปุ่ม ＋ เพื่อเพิ่มข้อมูลใหม่ได้เลยระหว่างรอ</div>';
   else renderProcessHistory();
   gasCached('getRecordsByProcess',[prod,proc],function(r,fromCache){
     if(prod!==currentProduct||proc!==currentProcess)return;
@@ -1453,7 +1453,7 @@ function loadProcessHistory(){
   },function(err){
     if(prod!==currentProduct||proc!==currentProcess)return;
     historyRecords=[];
-    historyError=err.network?'📴 ออฟไลน์ — ยังไม่มีประวัติของกระบวนการนี้เก็บไว้ในเครื่อง (ยังบันทึกรายการใหม่ได้ตามปกติ)':'❌ โหลดข้อมูลไม่สำเร็จ: '+err.message;
+    historyError=err.network?'📴 ออฟไลน์หรือเน็ตช้า — โหลดประวัติไม่สำเร็จ (ยังบันทึกรายการใหม่ได้ตามปกติ)':'❌ โหลดข้อมูลไม่สำเร็จ: '+err.message;
     renderProcessHistory();
   },slimRecords);
 }
@@ -1489,26 +1489,40 @@ function openProduct(code){
 }
 function backToMenu(){switchView($('listView'),$('menuView'),'left')}
 
+var plBuiltKey='',listScroll=0;
 function renderProcessList(filter){
   filter=(filter||'').trim().toLowerCase();
-  var c=$('processListContainer');c.innerHTML='';
+  var c=$('processListContainer');
   var all=processesByProduct[currentProduct]||[];
-  if(!all.length){c.innerHTML='<div class="empty-state">ยังไม่มีการตั้งค่ากระบวนการสำหรับผลิตภัณฑ์นี้<br>กรุณาติดต่อผู้ดูแลระบบเพื่อเพิ่มรายชื่อกระบวนการ</div>';return}
   var list=all.filter(function(p){return p.toLowerCase().indexOf(filter)>-1});
-  if(!list.length){c.innerHTML='<div class="empty-state">ไม่พบกระบวนการที่ค้นหา</div>';return}
+  var key=currentProduct+'|'+filter;
+  if(key!==plBuiltKey){ // สร้างแถวใหม่เฉพาะตอนเปลี่ยนผลิตภัณฑ์/คำค้นหา — ไม่สร้างซ้ำทุกครั้งที่ข้อมูลมา
+    c.innerHTML='';
+    if(!all.length){plBuiltKey='';c.innerHTML='<div class="empty-state">ยังไม่มีการตั้งค่ากระบวนการสำหรับผลิตภัณฑ์นี้<br>กรุณาติดต่อผู้ดูแลระบบเพื่อเพิ่มรายชื่อกระบวนการ</div>';return}
+    if(!list.length){plBuiltKey='';c.innerHTML='<div class="empty-state">ไม่พบกระบวนการที่ค้นหา</div>';return}
+    plBuiltKey=key;
+    list.forEach(function(p,i){
+      var row=document.createElement('div');
+      row.className='process-row'+(i<14?' row-fade-in':'');
+      if(i<14)row.style.animationDelay=Math.min(i*25,300)+'ms';
+      row.dataset.p=p;
+      row.innerHTML='<span class="process-name">'+esc(p)+'</span><span class="process-right"><span class="process-count empty">—</span><span class="process-chevron">›</span></span>';
+      c.appendChild(row);
+    });
+  }
+  // อัปเดตเฉพาะตัวเลข ไม่แตะตัวแถว (แถวที่กำลังกดจึงไม่ถูกแทนที่)
   var pt=pendingTotals();
-  list.forEach(function(p,i){
-    var row=document.createElement('div');row.className='process-row row-fade-in';
-    row.style.animationDelay=Math.min(i*25,300)+'ms';
-    var hasT=Object.prototype.hasOwnProperty.call(processTotals,p)||pt[p]>0;
-    var count=hasT
-      ?'<span class="process-count pop">'+formatNum((processTotals[p]||0)+(pt[p]||0))+'</span>'
-      :'<span class="process-count empty">—</span>';
-    row.innerHTML='<span class="process-name">'+p+'</span><span class="process-right">'+count+'<span class="process-chevron">›</span></span>';
-    row.onclick=function(){openEntry(p)};
-    c.appendChild(row);
+  c.querySelectorAll('.process-row').forEach(function(row){
+    var p=row.dataset.p,el=row.querySelector('.process-count');
+    var has=Object.prototype.hasOwnProperty.call(processTotals,p)||pt[p]>0;
+    var txt=has?formatNum((processTotals[p]||0)+(pt[p]||0)):'—';
+    if(el.textContent!==txt){el.textContent=txt;el.className='process-count'+(has?'':' empty')}
   });
 }
+$('processListContainer').addEventListener('click',function(e){
+  var r=e.target.closest('.process-row');
+  if(r&&r.dataset.p)openEntry(r.dataset.p);
+});
 
 function switchView(fromEl,toEl,direction){
   fromEl.classList.remove('active');
@@ -1519,6 +1533,7 @@ function switchView(fromEl,toEl,direction){
 }
 
 function openEntry(p){
+  listScroll=window.scrollY||0;
   currentProcess=p;editRecordId=null;
   historyRecords=[]; // กันเติมข้อมูลข้ามกระบวนการ
   $('selectedProductLabel').textContent='กระบวนการ · '+currentProduct;
@@ -1529,6 +1544,7 @@ function openEntry(p){
 function backToList(){
   $('fabAddBtn').classList.remove('visible');
   switchView($('entryView'),$('listView'),'left');
+  window.scrollTo(0,listScroll);
 }
 function showHistoryPanel(skipLoad){
   $('formPanel').style.display='none';
