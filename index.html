@@ -1007,7 +1007,9 @@ function gasCached(name,args,ok,fail,transform){
   // แสดงข้อมูลจากแคชทันที แล้วค่อยดึงข้อมูลล่าสุดจากเซิร์ฟเวอร์
   // ลดเวลารอหน้าแอป โดยยังคงอัปเดตข้อมูลจริงเมื่อออนไลน์
   var cached=lsGet(key,null),hasCache=!!(cached&&cached.v!==undefined);
-  if(hasCache)ok(cached.v,true);
+  if(hasCache){
+    try{ok(cached.v,true)}catch(e){console.error('['+name+'] แคชเสีย — ลบทิ้ง',e);try{localStorage.removeItem(key)}catch(e2){}hasCache=false}
+  }
   apiCall(name,args).then(function(r){
     cacheWrite(key,transform?transform(r):r);
     ok(r,false);
@@ -1297,7 +1299,8 @@ function setDateValue(iso){
   $('dateDisplay').value=formatDisplayDate(iso);
 }
 function formatDateHeader(d){
-  var p=(d||'').split('-');
+  d=d==null?'':String(d);
+  var p=d.split('-');
   return p.length===3?parseInt(p[2],10)+'/'+parseInt(p[1],10)+'/'+p[0]:(d||'-');
 }
 
@@ -1482,14 +1485,23 @@ function loadProcessTotals(){
   function redraw(){renderProcessList($('processSearch').value)}
   gasCached('getProcessGrandTotals',[prod],function(r){if(prod!==currentProduct)return;processTotals=r||{};redraw()},redraw);
 }
+function normRecords(r){ // กันข้อมูลผิดรูปจากแคช/เซิร์ฟเวอร์ (ไม่ใช่อาร์เรย์, ค่า null, วันที่เป็นตัวเลข, พนักงานเป็นข้อความ)
+  if(!Array.isArray(r))return [];
+  return r.filter(function(x){return x&&typeof x==='object'}).map(function(x){
+    if(typeof x.date!=='string')x.date=(x.date==null||x.date==='')?'':String(x.date);
+    if(!Array.isArray(x.employees))x.employees=x.employees?String(x.employees).split(/\s*,\s*/).filter(Boolean):[];
+    return x;
+  });
+}
 function loadProcessHistory(){
   var c=$('historyListContainer'),prod=currentProduct,proc=currentProcess;
   historyError='';historyFromCache=false;
   if(!historyRecords.length&&!pendingRecords().length)c.innerHTML='<div class="empty-state"><div class="spinner" style="margin:0 auto 12px;width:32px;height:32px;border-width:3px;border-color:rgba(27,111,184,.25);border-top-color:var(--primary)"></div>กำลังโหลดประวัติ... (ครั้งแรกอาจใช้เวลาสักครู่)<br>กดปุ่ม ＋ เพื่อเพิ่มข้อมูลใหม่ได้เลยระหว่างรอ</div>';
-  else renderProcessHistory();
+  else{try{renderProcessHistory()}catch(e){console.error('[renderProcessHistory]',e)}}
   gasCached('getRecordsByProcess',[prod,proc],function(r,fromCache){
     if(prod!==currentProduct||proc!==currentProcess)return;
-    historyRecords=r||[];historyFromCache=!!fromCache;renderProcessHistory();
+    historyRecords=normRecords(r);historyFromCache=!!fromCache;
+    try{renderProcessHistory()}catch(e){console.error('[renderProcessHistory]',e);$('historyListContainer').innerHTML='<div class="empty-state">❌ แสดงประวัติไม่สำเร็จ — กดปุ่ม ＋ เพื่อเพิ่มข้อมูลใหม่ได้ตามปกติ</div>'}
   },function(err){
     if(prod!==currentProduct||proc!==currentProcess)return;
     historyRecords=[];
@@ -1578,8 +1590,13 @@ function openEntry(p){
   historyRecords=[]; // กันเติมข้อมูลข้ามกระบวนการ
   $('selectedProductLabel').textContent='กระบวนการ · '+currentProduct;
   $('selectedProcessLabel').textContent=p;
-  showHistoryPanel();
-  switchView($('listView'),$('entryView'),'right');
+  switchView($('listView'),$('entryView'),'right'); // สลับหน้าก่อนเสมอ — ถ้าโหลดประวัติพัง ก็ยังเข้าหน้ากระบวนการได้
+  try{showHistoryPanel()}catch(err){
+    console.error('[openEntry]',err);
+    $('formPanel').style.display='none';$('historyPanel').style.display='block';
+    $('fabAddBtn').classList.add('visible');
+    try{$('historyListContainer').innerHTML='<div class="empty-state">❌ แสดงประวัติไม่สำเร็จ — กดปุ่ม ＋ เพื่อเพิ่มข้อมูลใหม่ได้ตามปกติ</div>'}catch(e2){}
+  }
 }
 function backToList(){
   $('fabAddBtn').classList.remove('visible');
@@ -1829,6 +1846,7 @@ function renderProcessHistory(){
     c.appendChild(header);
 
     recs.forEach(function(r){
+     try{
       var isP=!!r.pending;
       var dt=lossTotal(r.downtime),pl=planTotal(r.downtime),ng=sumFlat(r.ng);
       var flags=(dt>0?'<span class="flag-chip">⏸ Loss Time '+dt+'</span>':'')+(pl>0?'<span class="flag-chip">📋 Plan '+pl+'</span>':'')+(ng>0?'<span class="flag-chip ng">⚠️ NG '+ng+'</span>':'');
@@ -1850,6 +1868,7 @@ function renderProcessHistory(){
         ?function(){showToast('รายการนี้ยังไม่ได้ส่งขึ้นระบบ — แก้ไขได้หลังส่งสำเร็จ')}
         :function(){showEditForm(r)};
       c.appendChild(entry);
+     }catch(e){console.error('[history row]',e,r)}
     });
   });
 }
