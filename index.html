@@ -743,7 +743,7 @@ var PRODUCTS=[
 ];
 
 var processesByProduct={
-  SOP:['Lathe Auto (B08-01)','Lathe Auto (B12-13)','Lathe Auto (B12-24)','Lathe Auto (B12-28)','Cold Forging (SOP)','Lathe SOP (Set 1)','Lathe SOP (Set 2)','Lathe SOP (Set 6)','Lathe SOP (Set 7)','Lathe 2 11070 11090','Roll Slit SOP','Grinding SOP (Set 3)','Grinding SOP (Set 4)','Grinding SOP (Set 5)','Grinding SOP (Set 6)','Grinding SOP (Set 7)','Gr 1 11070 11090','Gr 2 11070 11090','Induction','Screening 1 SOP','Screening 100 SOP'],
+  SOP:['Lathe Auto (B08-01)','Lathe Auto (B12-13)','Lathe Auto (B12-24)','Lathe Auto (B12-28)','Cold Forging (SOP)','Lathe SOP (Set 1)','Lathe SOP (Set 2)','Lathe SOP (Set 6)','Lathe SOP (Set 7)','Lathe 2 11070 11090','Rolling 11070 11090','Roll Slit SOP','Grinding SOP (Set 3)','Grinding SOP (Set 4)','Grinding SOP (Set 5)','Grinding SOP (Set 6)','Grinding SOP (Set 7)','Gr 1 11070 11090','Gr 2 11070 11090','Induction','Screening 1 SOP','Screening 100 SOP'],
   SWP:['Grinding 1 SWP (Set 1)','Grinding 1 SWP (Set 2)','Lathe 1,2 + Gr 2 (Set 1)','Lathe 1,2 + Gr 2 (Set 2)','Lathe 1,2 + Gr 2 (Set 4)','Milling Small SWP','Deburring Small SWP','Grinding Small SWP','Screening 100 SWP (Change Box)','Screening 100 SWP'],
   VBA:['Lathe OP1 (B23-16)','Lathe OP1 (B23-17)','Lathe OP1 (B15-03)','Lathe OP1 (B10-15)','Lathe OP1 (B13-11)','Lathe OP1 (B15-02)','Lathe OP1 (B12-01)','Lathe OP2 (B05-07)','Lathe OP2 (B07-07)','Lathe OP2 (B07-04)','Lathe OP2 (B11-32)','Lathe OP2 (B12-23)','Lathe OP2 (B12-29)','Screening 1 VBA','Screening 1 VBA (Plunger)','Screening 100 VBA (Plunger)','Screening 100 VBA'],
   VOP:['Lathe Auto (B22-01)','Lathe Auto (B23-01)','Lathe Auto (B13-06)','Lathe Auto (B17-16)','Lathe 1,2 (10230)','Drilling (10290)','Deburring (10290)','Grinding 1','Grinding 2','Grinding 3','Camera','Screening 100 VOP']
@@ -815,6 +815,7 @@ regMach(['Cold Forging (SOP)'],['Cold Forging (SOP)']);
 regMach(['Lathe 1','Lathe 2','Rolling Slit','Deburring'],['Lathe SOP (Set 1)','Lathe SOP (Set 2)']);
 regMach(['Lathe 1','Lathe 2','Lathe 3','Rolling Slit','Deburring'],['Lathe SOP (Set 6)','Lathe SOP (Set 7)']);
 regMach(['Lathe 2'],['Lathe 2 11070 11090']);
+regMach(['Rolling 11070 11090'],['Rolling 11070 11090']);
 regMach(['Gr 1 11070 11090'],['Gr 1 11070 11090']);
 regMach(['Gr 2 11070 11090'],['Gr 2 11070 11090']);
 regMach(['Roll Slit'],['Roll Slit SOP']);
@@ -864,6 +865,7 @@ regNg(NG_LATHE_SOP,'Lathe 1',['Lathe SOP (Set 1)','Lathe SOP (Set 2)','Lathe SOP
 regNg(NG_LATHE_SOP,'Lathe 2',['Lathe SOP (Set 1)','Lathe SOP (Set 2)','Lathe SOP (Set 6)','Lathe SOP (Set 7)','Lathe 2 11070 11090']);
 regNg(NG_LATHE_SOP,'Lathe 3',['Lathe SOP (Set 6)','Lathe SOP (Set 7)']);
 regNg(NG_ROLL_SET,'Rolling Slit',['Lathe SOP (Set 1)','Lathe SOP (Set 2)','Lathe SOP (Set 6)','Lathe SOP (Set 7)']);
+regNg(NG_ROLL_SET,'Rolling 11070 11090',['Rolling 11070 11090']);
 regNg(NG_ROLL_SLIT,'Roll Slit',['Roll Slit SOP']);
 regNg(NG_INDUCTION,'Induction',['Induction']);
 ['Grinding 1','Grinding 2'].forEach(function(m){regNg(NG_DEFAULT,m,['Grinding SOP (Set 3)','Grinding SOP (Set 4)','Grinding SOP (Set 5)','Grinding SOP (Set 6)','Grinding SOP (Set 7)'])});
